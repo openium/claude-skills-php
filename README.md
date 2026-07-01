@@ -49,13 +49,11 @@ Commitez le dossier `.claude/skills/` dans votre repo. Toute l'équipe y accède
 | [/dto](skills/dto) | DTOs readonly avec validation et mapping entité |
 | [/command](skills/command) | Commande Symfony Console avec arguments, progress bar, dry-run |
 | [/api-doc](skills/api-doc) | Documentation OpenAPI (NelmioApiDocBundle) |
-| [/api-platform](skills/api-platform) | Ressource API Platform : opérations, filtres, sérialisation |
 
 ### Infrastructure & CI
 
 | Skill | Description |
 |-------|-------------|
-| [/ci](skills/ci) | Pipeline CI/CD (GitHub Actions / GitLab CI) |
 | [/docker](skills/docker) | Environnement Docker complet (PHP-FPM, Caddy, DB, Redis, Mailpit) |
 
 ### Symfony
