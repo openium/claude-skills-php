@@ -16,6 +16,34 @@ cp -r .claude/skills /chemin/du/projet/.claude/
 
 Commitez le dossier `.claude/skills/` dans le projet cible pour le rendre disponible à toute l'équipe.
 
+## Template CLAUDE.md
+
+Un modèle de fichier `CLAUDE.md` est disponible dans [`templates/CLAUDE.md`](templates/CLAUDE.md).
+
+Il peut être copié à la racine d'un projet PHP/Symfony pour documenter le contexte projet, la stack, les commandes utiles, les règles de sécurité et le workflow attendu avec Claude Code.
+
+Prompt recommandé pour générer un `CLAUDE.md` adapté à un projet :
+
+```text
+À partir du template `templates/CLAUDE.md`, génère un fichier `CLAUDE.md` à la racine de ce projet.
+
+Avant d'écrire le fichier :
+- analyse la structure du projet ;
+- lis les fichiers de configuration utiles : `composer.json`, `composer.lock`, `symfony.lock`, `phpunit.xml*`, `phpstan*`, `.php-cs-fixer*`, `docker-compose*`, `Dockerfile*`, `Jenkinsfile`, `.github/workflows/*` s'ils existent ;
+- identifie les versions PHP, Symfony, Doctrine et les outils réellement utilisés ;
+- repère les commandes disponibles pour installer, tester, analyser et lancer le projet ;
+- déduis les conventions existantes sans inventer de règles non visibles dans le dépôt.
+
+Ensuite :
+- remplace les placeholders du template par les informations du projet ;
+- conserve les sections utiles ;
+- supprime les exemples ou options qui ne s'appliquent pas ;
+- garde les règles de sécurité, Git et données sensibles ;
+- indique clairement les informations que tu n'as pas pu déterminer.
+
+Avant modification, liste les changements prévus et attends ma validation.
+```
+
 ## Skills Disponibles
 
 ### Qualité De Code
