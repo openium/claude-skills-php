@@ -26,6 +26,7 @@ Commitez le dossier `.claude/skills/` dans votre repo. Toute l'équipe y accède
 | [/refactor](skills/refactor) | Refactoring guidé par l'architecture hexagonale et les principes SOLID |
 | [/phpstan](skills/phpstan) | Corrige les erreurs PHPStan sans jamais utiliser `@phpstan-ignore` |
 | [/deprecations](skills/deprecations) | Scanne les deprecations PHP et Symfony, propose les remplacements |
+| [/doctrine](skills/doctrine) | Audite Doctrine ORM/DBAL : entités, relations, repositories, transactions |
 
 ### Tests & données
 
@@ -40,6 +41,7 @@ Commitez le dossier `.claude/skills/` dans votre repo. Toute l'équipe y accède
 |-------|-------------|
 | [/security](skills/security) | Audit de sécurité basé sur l'OWASP Top 10 |
 | [/performance](skills/performance) | Détecte les N+1, caches manquants, requêtes lentes |
+| [/observability](skills/observability) | Améliore logs, traces, métriques, erreurs et alerting |
 
 ### Génération de code
 
