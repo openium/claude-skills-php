@@ -1,21 +1,21 @@
 ---
 name: api-doc
-description: "Génère ou améliore la documentation OpenAPI d'endpoints Symfony avec NelmioApiDocBundle. Utilise les attributs OpenApi, Model, Security, les routes Symfony, les DTO/Form/Entities et les groupes de sérialisation."
+description: "Generates or improves OpenAPI documentation for Symfony endpoints with NelmioApiDocBundle. Uses OpenApi, Model, and Security attributes, Symfony routes, DTO/Form/Entities, and serialization groups."
 ---
 
-# Documentation OpenAPI avec NelmioApiDocBundle
+# OpenAPI Documentation with NelmioApiDocBundle
 
-## Processus
+## Process
 
-1. Vérifier le contexte projet :
-   - `composer.json` : présence de `nelmio/api-doc-bundle`, version PHP, version Symfony.
-   - `config/packages/nelmio_api_doc.yaml` : `documentation`, `areas`, `models`, `use_validation_groups`.
-   - `config/routes/nelmio_api_doc.yaml` : route JSON et route UI éventuelle.
-   - Contrôleur cible, DTOs, FormTypes, entités, groupes de sérialisation et contraintes Validator.
-2. Analyser chaque endpoint : route, méthode HTTP, paramètres, body, réponse, sécurité et erreurs possibles.
-3. Générer ou corriger les attributs OpenAPI directement dans le contrôleur.
+1. Check the project context:
+   - `composer.json`: presence of `nelmio/api-doc-bundle`, PHP version, Symfony version.
+   - `config/packages/nelmio_api_doc.yaml`: `documentation`, `areas`, `models`, `use_validation_groups`.
+   - `config/routes/nelmio_api_doc.yaml`: possible JSON route and UI route.
+   - Target controller, DTOs, FormTypes, entities, serialization groups, and Validator constraints.
+2. Analyze each endpoint: route, HTTP method, parameters, body, response, security, and possible errors.
+3. Generate or fix OpenAPI attributes directly in the controller.
 
-## Imports à privilégier
+## Imports to Prefer
 
 ```php
 use Nelmio\ApiDocBundle\Attribute\Model;
@@ -23,25 +23,25 @@ use Nelmio\ApiDocBundle\Attribute\Security;
 use OpenApi\Attributes as OA;
 ```
 
-## Règles Nelmio
+## Nelmio Rules
 
-- Ne pas définir manuellement le `path` dans les attributs OpenAPI : Nelmio le déduit de `#[Route]`.
-- Utiliser `#[Model(type: ...)]` dès qu'un DTO, FormType, entité ou objet PHP décrit le payload ou la réponse.
-- Utiliser les `groups` dans `Model` pour aligner la documentation avec le Serializer.
-- Si `nelmio_api_doc.use_validation_groups: true` est actif, aligner les groupes `Model` avec les groupes Validator.
-- Pour une collection JSON, utiliser `OA\JsonContent(type: 'array', items: new OA\Items(ref: new Model(...)))`.
-- Pour un objet JSON simple, utiliser `content: new Model(type: XxxDto::class, groups: [...])`.
-- Ajouter `#[Security(name: 'Bearer')]` si la route utilise le schéma Bearer défini dans `nelmio_api_doc.documentation.components.securitySchemes`.
-- Ne pas écrire de `OA\Schema` manuel si un modèle PHP existant permet de générer le schéma.
+- Do not manually define the `path` in OpenAPI attributes: Nelmio infers it from `#[Route]`.
+- Use `#[Model(type: ...)]` whenever a DTO, FormType, entity, or PHP object describes the payload or response.
+- Use `groups` in `Model` to align documentation with the Serializer.
+- If `nelmio_api_doc.use_validation_groups: true` is active, align `Model` groups with Validator groups.
+- For a JSON collection, use `OA\JsonContent(type: 'array', items: new OA\Items(ref: new Model(...)))`.
+- For a simple JSON object, use `content: new Model(type: XxxDto::class, groups: [...])`.
+- Add `#[Security(name: 'Bearer')]` if the route uses the Bearer scheme defined in `nelmio_api_doc.documentation.components.securitySchemes`.
+- Do not write a manual `OA\Schema` if an existing PHP model can generate the schema.
 
-## Configuration Nelmio à vérifier
+## Nelmio Configuration to Check
 
 ```yaml
 nelmio_api_doc:
     documentation:
         info:
             title: 'API'
-            description: 'Documentation API'
+            description: 'API documentation'
             version: '1.0.0'
         components:
             securitySchemes:
@@ -54,47 +54,47 @@ nelmio_api_doc:
             - ^/api(?!/doc$)
 ```
 
-## Ce qu'il faut documenter pour chaque endpoint
+## What to Document for Each Endpoint
 
-- `#[OA\Tag]` : groupement logique
-- `#[OA\Parameter]` : chaque paramètre path et query qui n'est pas déjà évident via la route
-- `#[OA\RequestBody]` : body pour POST/PUT/PATCH ou endpoint avec payload
-- `#[OA\Response]` : chaque code de réponse réellement possible (200, 201, 204, 210, 400, 401, 403, 404, 409, 412, 422)
-- `#[Security]` : schéma de sécurité si la route est protégée
+- `#[OA\Tag]`: logical grouping
+- `#[OA\Parameter]`: each path and query parameter that is not already obvious through the route
+- `#[OA\RequestBody]`: body for POST/PUT/PATCH or endpoint with payload
+- `#[OA\Response]`: each response code that can actually occur (200, 201, 204, 210, 400, 401, 403, 404, 409, 412, 422)
+- `#[Security]`: security scheme if the route is protected
 
-## Réponses fréquentes
+## Common Responses
 
-- `200` : lecture ou modification avec body de réponse
-- `201` : création réussie
-- `204` : suppression ou action sans body
-- `400` : requête invalide
-- `401` : non authentifié
-- `403` : non autorisé
-- `404` : ressource non trouvée
-- `409` : conflit
-- `412` : précondition non satisfaite
-- `422` : erreurs de validation
+- `200`: read or modification with response body
+- `201`: successful creation
+- `204`: deletion or action without body
+- `400`: invalid request
+- `401`: unauthenticated
+- `403`: unauthorized
+- `404`: resource not found
+- `409`: conflict
+- `412`: precondition not satisfied
+- `422`: validation errors
 
-Ne documenter un code que s'il peut réellement être produit par l'endpoint ou par la couche framework utilisée.
+Document a code only if it can actually be produced by the endpoint or by the framework layer used.
 
-## Patterns utiles
+## Useful Patterns
 
-### Réponse objet
+### Object Response
 
 ```php
 #[OA\Response(
     response: 200,
-    description: 'Retourne le détail de la ressource.',
+    description: 'Returns the resource details.',
     content: new Model(type: UserDto::class, groups: ['user:read'])
 )]
 ```
 
-### Réponse collection
+### Collection Response
 
 ```php
 #[OA\Response(
     response: 200,
-    description: 'Retourne la liste des ressources.',
+    description: 'Returns the resource list.',
     content: new OA\JsonContent(
         type: 'array',
         items: new OA\Items(ref: new Model(type: UserDto::class, groups: ['user:list']))
@@ -102,7 +102,7 @@ Ne documenter un code que s'il peut réellement être produit par l'endpoint ou 
 )]
 ```
 
-### Body de création ou modification
+### Creation or Modification Body
 
 ```php
 #[OA\RequestBody(
@@ -111,7 +111,7 @@ Ne documenter un code que s'il peut réellement être produit par l'endpoint ou 
 )]
 ```
 
-### Sécurité Bearer
+### Bearer Security
 
 ```php
 #[Security(name: 'Bearer')]
@@ -119,7 +119,7 @@ Ne documenter un code que s'il peut réellement être produit par l'endpoint ou 
 
 ## Validation
 
-Proposer ou lancer selon le contexte :
+Propose or run according to context:
 
 ```bash
 bin/console lint:yaml config/packages/nelmio_api_doc.yaml
@@ -127,8 +127,8 @@ bin/console lint:container
 bin/console debug:router
 ```
 
-Si une route JSON Nelmio existe, vérifier que `/api/doc.json` répond et que le JSON OpenAPI est généré.
+If a Nelmio JSON route exists, verify that `/api/doc.json` responds and that OpenAPI JSON is generated.
 
-## Format de sortie
+## Output Format
 
-Fournir les imports à ajouter, les attributs complets à placer au-dessus de chaque méthode, les ajustements éventuels de `nelmio_api_doc.yaml`, puis les commandes de vérification.
+Provide the imports to add, the complete attributes to place above each method, any `nelmio_api_doc.yaml` adjustments, then the verification commands.

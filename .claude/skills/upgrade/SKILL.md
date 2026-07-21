@@ -1,128 +1,128 @@
 ---
 name: upgrade
-description: "Assiste les upgrades PHP/Symfony et dépendances Composer. Analyse les versions actuelles, deprecations, breaking changes et conflits, puis produit ou applique un plan de migration par étapes. Ne monte jamais PHP sans validation explicite."
+description: "Assists PHP/Symfony and Composer dependency upgrades. Analyzes current versions, deprecations, breaking changes, and conflicts, then produces or applies a step-by-step migration plan. Never upgrades PHP without explicit validation."
 ---
 
-# Montée de version PHP/Symfony
+# PHP/Symfony Version Upgrade
 
-## Périmètre
+## Scope
 
-Déterminer si l'utilisateur demande :
+Determine whether the user is asking for:
 
-- Un diagnostic ou plan d'upgrade : ne pas modifier le code.
-- L'application d'une migration : procéder par étapes vérifiables.
-- Un périmètre ciblé : PHP, Symfony, dépendance Composer, bundle, config ou code applicatif.
+- An upgrade diagnosis or plan: do not modify code.
+- Applying a migration: proceed through verifiable steps.
+- A targeted scope: PHP, Symfony, Composer dependency, bundle, config, or application code.
 
-Si la version cible n'est pas donnée, analyser l'état actuel et demander la cible avant de modifier.
+If the target version is not given, analyze the current state and ask for the target before modifying.
 
-## État des lieux
+## Current State
 
-Inspecter selon le projet :
+Inspect according to the project:
 
 - `composer.json`, `composer.lock`, `symfony.lock`
-- Version PHP requise, `config.platform.php`, extensions PHP
-- Packages `symfony/*`, bundles tiers, Doctrine, PHPUnit, PHPStan, Rector
+- Required PHP version, `config.platform.php`, PHP extensions
+- `symfony/*` packages, third-party bundles, Doctrine, PHPUnit, PHPStan, Rector
 - `config/bundles.php`, `config/packages/`, `config/routes/`
 - `phpunit.xml*`, `phpstan.neon*`, `rector.php`
-- Dockerfile, `docker-compose*.yml`, CI GitHub/GitLab, scripts Composer
+- Dockerfile, `docker-compose*.yml`, GitHub/GitLab CI, Composer scripts
 
-Ne jamais lire ni modifier `.env.local`.
+Never read or modify `.env.local`.
 
-## Stratégie
+## Strategy
 
-- Préférer une migration incrémentale : dernière minor stable avant changement de major.
-- Corriger les deprecations avant un changement de major Symfony.
-- Garder les packages `symfony/*` cohérents sur la même version cible.
-- Traiter d'abord les conflits Composer et bundles tiers, puis le code applicatif.
-- Séparer upgrade, refactor et changement fonctionnel.
-- Ne pas modifier `composer.lock` à la main.
+- Prefer an incremental migration: latest stable minor before a major change.
+- Fix deprecations before a major Symfony change.
+- Keep `symfony/*` packages coherent on the same target version.
+- Handle Composer conflicts and third-party bundles first, then application code.
+- Separate upgrade, refactor, and functional change.
+- Do not modify `composer.lock` by hand.
 
-## Version PHP
+## PHP Version
 
-Ne jamais monter la version PHP sans validation explicite.
+Never upgrade PHP without explicit validation.
 
-Si Symfony ou une dépendance impose une version PHP supérieure :
+If Symfony or a dependency requires a higher PHP version:
 
-- Identifier la version PHP minimale requise.
-- Vérifier où PHP est fixé : `composer.json`, `config.platform.php`, Docker, CI, hébergement.
-- Expliquer l'impact sur l'environnement d'exécution.
-- Demander confirmation avant toute modification liée à PHP.
+- Identify the minimum required PHP version.
+- Check where PHP is pinned: `composer.json`, `config.platform.php`, Docker, CI, hosting.
+- Explain the impact on the runtime environment.
+- Ask for confirmation before any PHP-related modification.
 
-Ne pas introduire enums, readonly, `#[\Override]` ou autre syntaxe récente uniquement parce que la version cible les supporte.
+Do not introduce enums, readonly, `#[\Override]`, or other recent syntax only because the target version supports them.
 
 ## Symfony
 
-À vérifier :
+Check:
 
-- Annotations remplacées par des attributs PHP 8+
-- Classes, méthodes, options et services marqués `@deprecated`
-- Configurations YAML dépréciées ou déplacées
-- Changements de recipes Flex et fichiers générés
-- Changements de signature, événements, security voters, authenticator, serializer, forms, validation
-- Compatibilité des bundles tiers avec la version cible
+- Annotations replaced by PHP 8+ attributes
+- Classes, methods, options, and services marked `@deprecated`
+- Deprecated or moved YAML configuration
+- Flex recipe and generated file changes
+- Signature, event, security voter, authenticator, serializer, form, validation changes
+- Third-party bundle compatibility with the target version
 
-Comparer les recipes Flex avec prudence et conserver les adaptations projet.
+Compare Flex recipes carefully and keep project adaptations.
 
-## Composer et dépendances
+## Composer and Dependencies
 
-- Utiliser `composer why-not` pour expliquer un blocage de version.
-- Utiliser `composer update --dry-run` avant une mise à jour risquée.
-- Ne pas forcer une contrainte incompatible sans comprendre le package bloquant.
-- Ne pas supprimer un bundle sans vérifier ses usages dans code, config et templates.
-- Vérifier `composer audit` si disponible.
+- Use `composer why-not` to explain a version blocker.
+- Use `composer update --dry-run` before a risky update.
+- Do not force an incompatible constraint without understanding the blocking package.
+- Do not remove a bundle without checking its usages in code, config, and templates.
+- Check `composer audit` if available.
 
 ## Rector
 
-Si Rector est déjà présent (`rector.php`, dépendance `rector/rector` ou script Composer dédié), il peut être utilisé pour les migrations mécaniques.
+If Rector is already present (`rector.php`, `rector/rector` dependency, or dedicated Composer script), it can be used for mechanical migrations.
 
-Règles :
+Rules:
 
-- Ne pas installer Rector sans demande explicite.
-- Lancer d'abord Rector en dry-run si possible.
-- Limiter le périmètre si l'utilisateur a demandé une migration ciblée.
-- Relire le diff généré avant de considérer la migration comme valide.
-- Refuser un changement Rector qui modifie le comportement métier.
-- Lancer les tests après application.
+- Do not install Rector without an explicit request.
+- Run Rector in dry-run first if possible.
+- Limit the scope if the user requested a targeted migration.
+- Reread the generated diff before considering the migration valid.
+- Reject a Rector change that modifies business behavior.
+- Run tests after applying changes.
 
-## Commandes utiles
+## Useful Commands
 
-Lancer seulement les commandes adaptées au projet :
+Run only commands adapted to the project:
 
 - `composer outdated`
 - `composer why-not vendor/package version`
 - `composer update --dry-run`
 - `composer audit`
 - `bin/console debug:container --deprecations`
-- `vendor/bin/rector process --dry-run` si Rector est présent
-- Tests ciblés, suite complète, PHPStan si présents
+- `vendor/bin/rector process --dry-run` if Rector is present
+- Targeted tests, full suite, PHPStan if present
 
-Rapporter les commandes lancées, leur résultat et les blocages.
+Report commands run, their result, and blockers.
 
-## Ne pas faire
+## Do Not
 
-- Ne pas faire un saut majeur non demandé.
-- Ne pas masquer ou ignorer les deprecations.
-- Ne pas mélanger upgrade majeure et refactor large.
-- Ne pas changer le comportement métier pour satisfaire une upgrade.
-- Ne pas supprimer un package ou bundle sans preuve qu'il n'est plus utilisé.
-- Ne pas modifier les fichiers d'environnement locaux ou secrets.
+- Do not make an unrequested major jump.
+- Do not hide or ignore deprecations.
+- Do not mix major upgrade and broad refactor.
+- Do not change business behavior to satisfy an upgrade.
+- Do not remove a package or bundle without proof that it is no longer used.
+- Do not modify local environment files or secrets.
 
-## Format de sortie
+## Output Format
 
-Pour un diagnostic :
+For a diagnosis:
 
-- État actuel : PHP, Symfony, dépendances clés
-- Cible demandée ou recommandée
-- Blockers Composer
-- Deprecations et breaking changes identifiés
-- Fichiers ou packages impactés
-- Plan d'exécution ordonné
+- Current state: PHP, Symfony, key dependencies
+- Requested or recommended target
+- Composer blockers
+- Identified deprecations and breaking changes
+- Impacted files or packages
+- Ordered execution plan
 
-Après application :
+After applying:
 
-- Fichiers modifiés
-- Dépendances mises à jour
-- Corrections appliquées
-- Commandes lancées
-- Tests ou vérifications
-- Risques ou étapes restantes
+- Modified files
+- Updated dependencies
+- Applied fixes
+- Commands run
+- Tests or checks
+- Remaining risks or steps

@@ -1,158 +1,158 @@
 ---
 name: docker
-description: "Génère ou audite un environnement Docker pour projet PHP/Symfony. Produit Dockerfile, docker-compose, configs web, services DB/cache/queue/mail/assets, Makefile et validations, en respectant versions PHP/Symfony, sécurité, performance, dev/test/CI et conventions existantes."
+description: "Generates or audits a Docker environment for PHP/Symfony projects. Produces Dockerfile, docker-compose, web configs, DB/cache/queue/mail/assets services, Makefile, and validations, while respecting PHP/Symfony versions, security, performance, dev/test/CI, and existing conventions."
 ---
 
-# Environnement Docker pour PHP/Symfony
+# Docker Environment for PHP/Symfony
 
-## Périmètre
+## Scope
 
-Déterminer si l'utilisateur demande :
+Determine whether the user is asking for:
 
-- Création d'un environnement Docker local complet.
-- Audit ou correction d'un Dockerfile / docker-compose existant.
-- Ajout d'un service : DB, Redis, RabbitMQ, Mailpit, Node, worker, search.
-- Environnement de dev, test, CI ou production.
-- Correction ciblée : permissions, extensions PHP, Xdebug, performance, healthcheck, volumes.
+- Creation of a complete local Docker environment.
+- Audit or fix of an existing Dockerfile / docker-compose.
+- Adding a service: DB, Redis, RabbitMQ, Mailpit, Node, worker, search.
+- Dev, test, CI, or production environment.
+- Targeted fix: permissions, PHP extensions, Xdebug, performance, healthcheck, volumes.
 
-Si le besoin est ambigu, demander l'environnement cible : local dev, test, CI ou prod.
+If the need is ambiguous, ask for the target environment: local dev, test, CI, or prod.
 
-Ne pas écraser une configuration Docker existante sans analyser ses conventions.
+Do not overwrite an existing Docker configuration without analyzing its conventions.
 
-## État des lieux
+## Current State
 
-Inspecter selon le projet :
+Inspect according to the project:
 
-- `composer.json` : version PHP, extensions requises, scripts Composer, Symfony
-- `composer.lock` si présent pour confirmer extensions et packages
-- `.env` et `.env.dist` si présents, sans lire `.env.local`
-- Dockerfile, `docker-compose.yml`, `compose.yaml`, overrides et scripts existants
+- `composer.json`: PHP version, required extensions, Composer scripts, Symfony
+- `composer.lock` if present to confirm extensions and packages
+- `.env` and `.env.dist` if present, without reading `.env.local`
+- Dockerfile, `docker-compose.yml`, `compose.yaml`, overrides, and existing scripts
 - `package.json`, lockfiles, Vite, Webpack Encore, AssetMapper, npm/yarn/pnpm
-- Config Symfony : Doctrine, Messenger, Mailer, Redis/cache, Mercure, search
-- CI GitHub/GitLab si Docker doit s'intégrer aux tests
-- Contraintes legacy : PHP 7.x, anciennes extensions, Apache existant, Symfony ancien
+- Symfony config: Doctrine, Messenger, Mailer, Redis/cache, Mercure, search
+- GitHub/GitLab CI if Docker must integrate with tests
+- Legacy constraints: PHP 7.x, old extensions, existing Apache, old Symfony
 
-Ne jamais lire ni afficher `.env.local` ou des secrets.
+Never read or display `.env.local` or secrets.
 
-## Détection des besoins
+## Need Detection
 
-Depuis `composer.json`, `.env`, et la configuration :
+From `composer.json`, `.env`, and configuration:
 
-- Version PHP, extensions nécessaires
-- Base de données : `DATABASE_URL`
-- Redis : `REDIS_URL`
-- RabbitMQ : `MESSENGER_TRANSPORT_DSN` avec `amqp://`
-- Mailer : `MAILER_DSN`
-- Node.js : `package.json` présent
-- Search : Elasticsearch, OpenSearch, Meilisearch selon packages/config
-- Mercure : config ou package Mercure
-- Stockage/fichiers : uploads, S3/MinIO si package ou config explicite
-- Tests : base dédiée ou override `when@test`
+- PHP version, required extensions
+- Database: `DATABASE_URL`
+- Redis: `REDIS_URL`
+- RabbitMQ: `MESSENGER_TRANSPORT_DSN` with `amqp://`
+- Mailer: `MAILER_DSN`
+- Node.js: `package.json` present
+- Search: Elasticsearch, OpenSearch, Meilisearch according to packages/config
+- Mercure: Mercure config or package
+- Storage/files: uploads, S3/MinIO if package or explicit config
+- Tests: dedicated database or `when@test` override
 
-## Compatibilité PHP/Symfony
+## PHP/Symfony Compatibility
 
-- Aligner l'image PHP sur la contrainte du projet, pas sur la dernière version disponible.
-- Pour projets legacy PHP 7.x, utiliser images compatibles et extensions disponibles pour cette version.
-- Ne pas introduire syntaxe, outils ou images qui imposent une montée PHP non validée.
-- Respecter le serveur web existant si le projet a déjà Apache, Nginx ou Caddy.
-- Vérifier les extensions requises par Symfony et les bundles : `intl`, `pdo_*`, `zip`, `opcache`, `amqp`, `redis`, `gd`, `imagick`, `sodium`, `mbstring`, `xml`, `curl`.
+- Align the PHP image with the project constraint, not the latest available version.
+- For legacy PHP 7.x projects, use compatible images and extensions available for that version.
+- Do not introduce syntax, tools, or images that force an unvalidated PHP upgrade.
+- Respect the existing web server if the project already has Apache, Nginx, or Caddy.
+- Check extensions required by Symfony and bundles: `intl`, `pdo_*`, `zip`, `opcache`, `amqp`, `redis`, `gd`, `imagick`, `sodium`, `mbstring`, `xml`, `curl`.
 
 ## Services
 
-- **PHP-FPM** : version alignée sur composer.json, Xdebug configurable, OPcache
-- **Caddy** (recommandé) ou **Nginx**
-- **PostgreSQL/MySQL** selon DATABASE_URL, volume persistant
-- **Redis**, **RabbitMQ**, **Mailpit** selon les besoins
-- **Node** si package.json présent
-- **Worker Messenger** optionnel, seulement si le projet utilise des transports async
-- **Search** : Elasticsearch/OpenSearch/Meilisearch seulement si nécessaire
-- **Mercure** seulement si package/config explicite
+- **PHP-FPM**: version aligned with composer.json, configurable Xdebug, OPcache
+- **Caddy** (recommended) or **Nginx**
+- **PostgreSQL/MySQL** according to DATABASE_URL, persistent volume
+- **Redis**, **RabbitMQ**, **Mailpit** according to needs
+- **Node** if package.json is present
+- **Messenger Worker** optional, only if the project uses async transports
+- **Search**: Elasticsearch/OpenSearch/Meilisearch only if necessary
+- **Mercure** only if package/config is explicit
 
-## Environnements
+## Environments
 
-### Dev local
+### Local Dev
 
-- Volumes bind pour le code source.
-- Xdebug désactivable par variable.
-- OPcache configuré pour dev ou désactivé selon convention.
-- Mailpit/Mailhog pour emails.
-- Ports exposés seulement pour les services utiles localement.
+- Bind mounts for source code.
+- Xdebug disableable by variable.
+- OPcache configured for dev or disabled according to convention.
+- Mailpit/Mailhog for emails.
+- Ports exposed only for services useful locally.
 
 ### Test
 
-- Base de données isolée ou nom de base distinct.
-- Transport Messenger de test ou in-memory si le projet le prévoit.
-- Services externes remplacés par fakes/stubs si possible.
-- Commandes de test reproductibles via Makefile ou Composer.
+- Isolated database or distinct database name.
+- Test or in-memory Messenger transport if the project expects it.
+- External services replaced by fakes/stubs if possible.
+- Reproducible test commands through Makefile or Composer.
 
 ### CI
 
-- Configuration minimale et déterministe.
-- Pas de dépendance à des ports locaux spécifiques si évitable.
-- Cache Composer/Node à prévoir côté CI plutôt que dans le compose local.
-- `docker compose config`, build et tests comme étapes séparées.
+- Minimal and deterministic configuration.
+- No dependency on specific local ports if avoidable.
+- Composer/Node cache should be planned on the CI side rather than in local compose.
+- `docker compose config`, build, and tests as separate steps.
 
 ### Production
 
-- Ne pas générer une configuration production complète par défaut.
-- Si demandé explicitement : images immuables, secrets gérés hors git, user non-root, healthchecks, logs stdout/stderr, OPcache activé, pas de Xdebug, pas de volumes source.
+- Do not generate a complete production configuration by default.
+- If explicitly requested: immutable images, secrets managed outside git, non-root user, healthchecks, stdout/stderr logs, OPcache enabled, no Xdebug, no source volumes.
 
-## Bonnes pratiques
+## Best Practices
 
-- `.dockerignore` : exclure vendor/, node_modules/, var/, .git/
-- Healthcheck sur chaque service
-- Variables d'environnement dans .env
-- Makefile avec les commandes courantes
-- Images officielles ou images déjà utilisées par le projet
-- Multi-stage build si image applicative ou prod demandée
-- Cache Composer et Node optimisé
-- Installer seulement les extensions nécessaires
-- `COPY composer.*` avant `composer install` pour profiter du cache Docker
-- Ne pas lancer migrations automatiquement au démarrage du conteneur sauf convention explicite
-- Logs vers stdout/stderr
-- Noms de services et réseaux lisibles
+- `.dockerignore`: exclude vendor/, node_modules/, var/, .git/
+- Healthcheck on each service
+- Environment variables in .env
+- Makefile with common commands
+- Official images or images already used by the project
+- Multi-stage build if application or prod image is requested
+- Optimized Composer and Node cache
+- Install only required extensions
+- `COPY composer.*` before `composer install` to benefit from Docker cache
+- Do not automatically run migrations when the container starts unless this is an explicit convention
+- Logs to stdout/stderr
+- Readable service and network names
 
-## Sécurité
+## Security
 
-- Ne jamais committer de secrets, credentials prod, tokens ou `.env.local`.
-- Exposer uniquement les ports nécessaires en local.
-- Éviter root au runtime si possible.
-- Séparer secrets et variables non sensibles.
-- Ne pas utiliser `latest` pour les images critiques si la reproductibilité est importante.
-- Volumes avec permissions maîtrisées pour `var/`, cache, logs, uploads.
-- Désactiver Xdebug hors dev.
-- Ne pas inclure clés privées ou dumps de production dans l'image.
+- Never commit secrets, prod credentials, tokens, or `.env.local`.
+- Expose only necessary local ports.
+- Avoid root at runtime if possible.
+- Separate secrets and non-sensitive variables.
+- Do not use `latest` for critical images if reproducibility matters.
+- Volumes with controlled permissions for `var/`, cache, logs, uploads.
+- Disable Xdebug outside dev.
+- Do not include private keys or production dumps in the image.
 
 ## Performance
 
-- `.dockerignore` complet pour réduire le contexte de build.
-- Couches Docker ordonnées pour maximiser le cache.
-- Composer install avec flags adaptés à dev ou prod.
-- OPcache activé pour prod ou environnement proche prod.
-- Xdebug optionnel, jamais activé par défaut en perf/prod.
-- Volumes adaptés à l'OS si le projet a des lenteurs de bind mounts.
-- Node dependencies gérées avec lockfile et cache si pertinent.
+- Complete `.dockerignore` to reduce build context.
+- Docker layers ordered to maximize cache.
+- Composer install with flags adapted to dev or prod.
+- OPcache enabled for prod or prod-like environment.
+- Xdebug optional, never enabled by default in perf/prod.
+- Volumes adapted to the OS if the project has bind mount slowness.
+- Node dependencies managed with lockfile and cache if relevant.
 
-## Doctrine et Messenger
+## Doctrine and Messenger
 
-- DB avec healthcheck.
-- Volume persistant local pour DB, mais base test isolée.
-- Migrations lancées manuellement ou via commande explicite.
-- RabbitMQ/Redis seulement si transports async détectés.
-- Worker Messenger séparé si nécessaire, avec commande explicite et limites si possible.
-- Ne pas lancer un worker infini sans supervision ou sans commande claire.
+- DB with healthcheck.
+- Local persistent volume for DB, but isolated test database.
+- Migrations run manually or through an explicit command.
+- RabbitMQ/Redis only if async transports are detected.
+- Separate Messenger worker if needed, with explicit command and limits if possible.
+- Do not run an infinite worker without supervision or a clear command.
 
-## Node et assets
+## Node and Assets
 
-- Détecter le package manager : npm, yarn, pnpm.
-- Respecter Vite, Webpack Encore, AssetMapper ou absence de build Node.
-- Pour dev, proposer watcher si le projet l'utilise.
-- Pour prod/build image, compiler les assets dans une étape dédiée si demandé.
-- Ne pas ajouter Node si `package.json` absent et assets gérés par AssetMapper sans build.
+- Detect the package manager: npm, yarn, pnpm.
+- Respect Vite, Webpack Encore, AssetMapper, or absence of Node build.
+- For dev, propose a watcher if the project uses one.
+- For prod/build image, compile assets in a dedicated stage if requested.
+- Do not add Node if `package.json` is absent and assets are managed by AssetMapper without build.
 
-## Makefile et commandes
+## Makefile and Commands
 
-Proposer seulement les commandes adaptées :
+Propose only adapted commands:
 
 - `make up`
 - `make down`
@@ -166,11 +166,11 @@ Proposer seulement les commandes adaptées :
 - `make fixtures`
 - `make db-migrate`
 
-Ne pas masquer les commandes Docker réelles : le Makefile doit rester un raccourci lisible.
+Do not hide the real Docker commands: the Makefile must remain a readable shortcut.
 
 ## Validation
 
-Proposer ou lancer selon le contexte :
+Propose or run according to context:
 
 - `docker compose config`
 - `docker compose build`
@@ -179,33 +179,33 @@ Proposer ou lancer selon le contexte :
 - `docker compose exec php composer install`
 - `docker compose exec php bin/console about`
 - `docker compose exec php bin/console doctrine:schema:validate`
-- Tests ciblés si le projet est prêt
+- Targeted tests if the project is ready
 
-Ne pas lancer de migration réelle, purge de DB, suppression de volumes ou téléchargement massif sans confirmation explicite.
+Do not run a real migration, DB purge, volume deletion, or massive download without explicit confirmation.
 
-## Ne pas faire
+## Do Not
 
-- Ne pas lire `.env.local`.
-- Ne pas écraser Dockerfile ou compose existant sans préserver les conventions utiles.
-- Ne pas exposer DB, RabbitMQ, Redis ou services internes inutilement.
-- Ne pas introduire un service non nécessaire.
-- Ne pas imposer Caddy, Nginx, Apache, Node ou une version PHP si le projet indique autre chose.
-- Ne pas utiliser credentials de production.
-- Ne pas lancer automatiquement migrations, fixtures ou workers au démarrage sans demande explicite.
-- Ne pas générer une configuration production en prétendant qu'elle est prête pour tous les hébergements.
+- Do not read `.env.local`.
+- Do not overwrite an existing Dockerfile or compose without preserving useful conventions.
+- Do not unnecessarily expose DB, RabbitMQ, Redis, or internal services.
+- Do not introduce an unnecessary service.
+- Do not impose Caddy, Nginx, Apache, Node, or a PHP version if the project indicates something else.
+- Do not use production credentials.
+- Do not automatically run migrations, fixtures, or workers at startup without an explicit request.
+- Do not generate a production configuration while pretending it is ready for every hosting provider.
 
-## Format de sortie
+## Output Format
 
-Pour une génération ou modification, fournir :
+For generation or modification, provide:
 
-- Fichiers créés ou modifiés
-- Services générés et raison
-- Versions PHP, DB, Node et images retenues
-- Ports exposés
-- Volumes et données persistantes
-- Variables d'environnement à définir, sans secrets
-- Commandes Makefile ou Docker utiles
-- Commandes de validation lancées ou à lancer
-- Hypothèses, limites et points de sécurité
+- Files created or modified
+- Generated services and reason
+- Chosen PHP, DB, Node, and image versions
+- Exposed ports
+- Volumes and persistent data
+- Environment variables to define, without secrets
+- Useful Makefile or Docker commands
+- Validation commands run or to run
+- Assumptions, limitations, and security points
 
-Générer tous les fichiers nécessaires (`compose.yaml` ou `docker-compose.yml`, Dockerfile, configs web, `.dockerignore`, Makefile si utile), prêts à utiliser avec `docker compose up` dans le contexte demandé.
+Generate all required files (`compose.yaml` or `docker-compose.yml`, Dockerfile, web configs, `.dockerignore`, Makefile if useful), ready to use with `docker compose up` in the requested context.

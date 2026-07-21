@@ -1,146 +1,146 @@
 ---
 name: debug
-description: "Aide au débogage pour projet PHP/Symfony. Analyse erreur, stacktrace, logs, test en échec ou comportement inattendu. Reproduit le problème si possible, isole la cause racine et propose un fix vérifiable sans masquer l'erreur."
+description: "Debugging help for PHP/Symfony projects. Analyzes an error, stacktrace, logs, failing test, or unexpected behavior. Reproduces the issue when possible, isolates the root cause, and proposes a verifiable fix without hiding the error."
 ---
 
-# Débogage PHP/Symfony
+# PHP/Symfony Debugging
 
-## Périmètre
+## Scope
 
-Si l'utilisateur fournit une erreur, une stacktrace, un log, un test en échec, une URL, une commande ou un fichier, commencer par ce signal.
+If the user provides an error, stacktrace, log, failing test, URL, command, or file, start from that signal.
 
-Sinon :
+Otherwise:
 
-- Lire `git status` pour repérer les changements récents.
-- Chercher les logs Symfony disponibles dans `var/log/`.
-- Identifier les scripts utiles dans `composer.json`.
-- Demander le symptôme exact si aucun signal exploitable n'est présent.
+- Read `git status` to identify recent changes.
+- Look for available Symfony logs in `var/log/`.
+- Identify useful scripts in `composer.json`.
+- Ask for the exact symptom if no usable signal is present.
 
-Ne jamais lire ni afficher `.env.local`. Ne pas afficher de secret, token, cookie, mot de passe ou donnée personnelle sensible présent dans les logs.
+Never read or display `.env.local`. Do not display any secret, token, cookie, password, or sensitive personal data present in logs.
 
-## Objectif
+## Objective
 
-Trouver la cause racine minimale et proposer une correction ciblée.
+Find the minimal root cause and propose a targeted fix.
 
-Ne pas se contenter de :
+Do not settle for:
 
-- masquer l'exception avec un `try/catch` trop large ;
-- ignorer une erreur de test ;
-- vider le cache comme solution permanente ;
-- modifier une configuration globale sans preuve ;
-- changer le comportement métier pour faire disparaître le symptôme.
+- hiding the exception with an overly broad `try/catch`;
+- ignoring a test error;
+- clearing the cache as a permanent solution;
+- modifying global configuration without proof;
+- changing business behavior to make the symptom disappear.
 
-## Processus
+## Process
 
-1. Capturer le symptôme exact : message, code HTTP, commande, entrée utilisateur, environnement, stacktrace, test ou log.
-2. Reproduire le problème avec la plus petite commande ou action possible.
-3. Lire la première frame applicative de la stacktrace, puis les appels voisins nécessaires.
-4. Formuler une hypothèse vérifiable et chercher la preuve dans le code, la configuration, la base ou les logs.
-5. Corriger la cause racine avec le plus petit changement cohérent avec le projet.
-6. Relancer la commande, le test ou le scénario qui reproduisait le bug.
-7. Ajouter ou proposer un test de non-régression quand le comportement métier est touché.
+1. Capture the exact symptom: message, HTTP code, command, user input, environment, stacktrace, test, or log.
+2. Reproduce the issue with the smallest possible command or action.
+3. Read the first application frame in the stacktrace, then the necessary neighboring calls.
+4. Formulate a verifiable hypothesis and look for proof in code, configuration, database, or logs.
+5. Fix the root cause with the smallest change coherent with the project.
+6. Rerun the command, test, or scenario that reproduced the bug.
+7. Add or propose a regression test when business behavior is touched.
 
-Si la reproduction est impossible, expliquer ce qui manque et fournir les commandes ou données à collecter.
+If reproduction is impossible, explain what is missing and provide the commands or data to collect.
 
-## Analyse par type d'erreur
+## Analysis by Error Type
 
-### Exceptions Symfony
+### Symfony Exceptions
 
-- Remonter la stacktrace jusqu'à la première frame applicative.
-- Distinguer exception métier attendue, mauvaise configuration, service absent, erreur de sérialisation et bug runtime.
-- Vérifier les fichiers de configuration concernés dans `config/packages/`, `config/routes/`, `config/services.yaml` et `config/bundles.php`.
-- Pour une erreur de container, comparer l'argument attendu, le service injecté, l'autowiring et les aliases.
-- Pour une erreur de routing, vérifier attributs, YAML/XML, préfixes, méthodes HTTP, host, locale et ordre des routes.
+- Walk up the stacktrace to the first application frame.
+- Distinguish expected business exception, bad configuration, missing service, serialization error, and runtime bug.
+- Check affected configuration files in `config/packages/`, `config/routes/`, `config/services.yaml`, and `config/bundles.php`.
+- For a container error, compare expected argument, injected service, autowiring, and aliases.
+- For a routing error, check attributes, YAML/XML, prefixes, HTTP methods, host, locale, and route order.
 
-### Erreurs PHP
+### PHP Errors
 
-- `TypeError` : vérifier l'appelant, les valeurs nullables, les DTO et les conversions depuis `Request`, env vars ou config.
-- `ArgumentCountError` : vérifier signature, injection de dépendances, factory, callable et listener.
-- `Undefined array key` : valider l'entrée, distinguer clé optionnelle et contrat incomplet.
-- `Call to a member function ... on null` : identifier pourquoi `null` est possible au runtime au lieu d'ajouter `?->` par défaut.
-- `Cannot access uninitialized property` : initialiser dans le constructeur ou rendre l'état explicitement nullable si métier.
-- `Memory exhausted` : chercher chargement massif, pagination absente, collection Doctrine lazy chargée en boucle, export ou serializer trop large.
+- `TypeError`: check the caller, nullable values, DTOs, and conversions from `Request`, env vars, or config.
+- `ArgumentCountError`: check signature, dependency injection, factory, callable, and listener.
+- `Undefined array key`: validate input, distinguish optional key from incomplete contract.
+- `Call to a member function ... on null`: identify why `null` is possible at runtime instead of adding `?->` by default.
+- `Cannot access uninitialized property`: initialize in constructor or make the state explicitly nullable if business-related.
+- `Memory exhausted`: look for massive loading, missing pagination, Doctrine lazy collection loaded in a loop, export, or overly broad serializer.
 
-### Erreurs Doctrine
+### Doctrine Errors
 
-- `MappingException` : vérifier les annotations/attributs de l'entité
-- `QueryException` : vérifier la syntaxe DQL et les noms de champs
-- `UniqueConstraintViolationException` : identifier la contrainte et les données en doublon
-- `TableNotFoundException` : migration manquante ou non exécutée
-- `NotNullConstraintViolationException` : vérifier validation, valeur par défaut, formulaire, DTO et migration.
-- `ForeignKeyConstraintViolationException` : vérifier ordre de persistance/suppression, cascade, orphanRemoval et données existantes.
-- `EntityManager is closed` : chercher l'exception précédente qui a fermé l'EntityManager.
-- `A new entity was found through the relationship` : vérifier cascade persist ou persistance explicite de l'entité liée.
-- Hydratation ou proxy cassé : vérifier constructeur, propriétés readonly, types PHP et colonnes nullables.
-- Écart schéma/entités : lancer ou proposer `doctrine:schema:validate` et inspecter les migrations récentes.
+- `MappingException`: check entity annotations/attributes.
+- `QueryException`: check DQL syntax and field names.
+- `UniqueConstraintViolationException`: identify the constraint and duplicate data.
+- `TableNotFoundException`: missing or unexecuted migration.
+- `NotNullConstraintViolationException`: check validation, default value, form, DTO, and migration.
+- `ForeignKeyConstraintViolationException`: check persistence/deletion order, cascade, orphanRemoval, and existing data.
+- `EntityManager is closed`: look for the previous exception that closed the EntityManager.
+- `A new entity was found through the relationship`: check cascade persist or explicit persistence of the related entity.
+- Broken hydration or proxy: check constructor, readonly properties, PHP types, and nullable columns.
+- Schema/entity drift: run or propose `doctrine:schema:validate` and inspect recent migrations.
 
-### Erreurs HTTP
+### HTTP Errors
 
-- 404 : vérifier le routing (`debug:router`)
-- 403 : vérifier les voters, firewalls, `security.yaml`
-- 405 : vérifier méthodes HTTP, formulaires, routes API et préflight CORS.
-- 400 : vérifier validation, désérialisation, payload JSON, query parameters et contraintes de DTO.
-- 401 : vérifier authenticator, token, session, cookies, remember me et firewalls.
-- 422 : vérifier validation serveur, groupes de validation et mapping des erreurs.
-- 500 : lire les logs (`var/log/dev.log`, `var/log/test.log` ou `var/log/prod.log`) et remonter la cause applicative.
-- Redirection inattendue : vérifier access control, login path, trailing slash, locale et HTTPS.
+- 404: check routing (`debug:router`)
+- 403: check voters, firewalls, `security.yaml`
+- 405: check HTTP methods, forms, API routes, and CORS preflight.
+- 400: check validation, deserialization, JSON payload, query parameters, and DTO constraints.
+- 401: check authenticator, token, session, cookies, remember me, and firewalls.
+- 422: check server-side validation, validation groups, and error mapping.
+- 500: read logs (`var/log/dev.log`, `var/log/test.log`, or `var/log/prod.log`) and trace the application cause.
+- Unexpected redirect: check access control, login path, trailing slash, locale, and HTTPS.
 
-### Erreurs de cache
+### Cache Errors
 
-Symptômes : modification de code sans effet, service introuvable après modification, template obsolète, config non prise en compte.
+Symptoms: code modification has no effect, service not found after modification, stale template, config not considered.
 
-Vérifier :
+Check:
 
-- environnement utilisé (`APP_ENV`, `--env=test`, `--env=prod`) sans lire `.env.local` ;
-- cache Symfony dans `var/cache/` ;
-- OPcache en prod ou dans le conteneur PHP ;
-- cache Doctrine metadata/query/result ;
-- cache HTTP, reverse proxy ou CDN si le symptôme est côté réponse HTTP.
+- environment used (`APP_ENV`, `--env=test`, `--env=prod`) without reading `.env.local`;
+- Symfony cache in `var/cache/`;
+- OPcache in prod or in the PHP container;
+- Doctrine metadata/query/result cache;
+- HTTP cache, reverse proxy, or CDN if the symptom is on the HTTP response side.
 
-Vider le cache est un diagnostic ou une étape de validation, pas une correction durable si le problème revient.
+Clearing cache is a diagnostic or validation step, not a durable fix if the problem returns.
 
-### Erreurs Messenger
+### Messenger Errors
 
-- Message non consommé : vérifier le routing et le transport
-- Handler non appelé : vérifier `#[AsMessageHandler]` et l'autoconfigure
-- Message dans failed transport : inspecter l'exception originale avec `messenger:failed:show`.
-- Retry en boucle : vérifier idempotence, stratégie retry, exception transitoire ou permanente.
-- Handler dupliqué : vérifier tags, autoconfiguration, bus et handlers multiples.
-- Désérialisation impossible : vérifier classe du message, propriétés readonly, compatibilité après déploiement et transport.
-- Transaction et async : vérifier dispatch avant/après commit, outbox éventuelle et effets de bord non rejouables.
+- Message not consumed: check routing and transport.
+- Handler not called: check `#[AsMessageHandler]` and autoconfigure.
+- Message in failed transport: inspect the original exception with `messenger:failed:show`.
+- Retry loop: check idempotency, retry strategy, transient or permanent exception.
+- Duplicate handler: check tags, autoconfiguration, bus, and multiple handlers.
+- Impossible deserialization: check message class, readonly properties, post-deployment compatibility, and transport.
+- Transaction and async: check dispatch before/after commit, possible outbox, and non-replayable side effects.
 
-### Erreurs de tests
+### Test Errors
 
-- Lire le premier échec réel avant les échecs en cascade.
-- Distinguer bug applicatif, fixture manquante, horloge non contrôlée, ordre de tests, dépendance externe et assertion trop fragile.
-- Pour PHPUnit, relancer le test ciblé avec un filtre si possible.
-- Pour tests fonctionnels, vérifier kernel reboot, base de test, transactions, fixtures et client authentifié.
-- Ne pas modifier l'assertion pour l'aligner sur un comportement cassé sans preuve que le nouveau comportement est attendu.
+- Read the first real failure before cascading failures.
+- Distinguish application bug, missing fixture, uncontrolled clock, test order, external dependency, and overly fragile assertion.
+- For PHPUnit, rerun the targeted test with a filter if possible.
+- For functional tests, check kernel reboot, test database, transactions, fixtures, and authenticated client.
+- Do not modify the assertion to align with broken behavior without proof that the new behavior is expected.
 
-### Erreurs de configuration et environnement
+### Configuration and Environment Errors
 
-- Vérifier `composer.json`, `composer.lock`, version PHP, extensions PHP, bundles activés et scripts.
-- Comparer environnement CLI, HTTP, worker Messenger et conteneur Docker si le bug n'apparaît que dans un contexte.
-- Vérifier variables d'environnement requises par nom uniquement, sans afficher leurs valeurs sensibles.
-- Vérifier permissions de fichiers pour cache, logs, uploads et sessions.
-- Pour Docker, vérifier service, réseau, ports, volumes et variables injectées.
+- Check `composer.json`, `composer.lock`, PHP version, PHP extensions, enabled bundles, and scripts.
+- Compare CLI, HTTP, Messenger worker, and Docker container environments if the bug appears only in one context.
+- Check required environment variables by name only, without displaying sensitive values.
+- Check file permissions for cache, logs, uploads, and sessions.
+- For Docker, check service, network, ports, volumes, and injected variables.
 
-### Erreurs de performance ou timeout
+### Performance or Timeout Errors
 
-- Identifier la ressource saturée : CPU, mémoire, base, réseau, disque, verrou.
-- Chercher requêtes en boucle, N+1 Doctrine, absence de pagination, sérialisation massive, appel HTTP bloquant.
-- Vérifier les logs SQL ou profiler si disponibles.
-- Proposer un fix ciblé : index, pagination, batch, eager loading contrôlé, cache, timeout explicite ou traitement async.
+- Identify the saturated resource: CPU, memory, database, network, disk, lock.
+- Look for queries in loops, Doctrine N+1, missing pagination, massive serialization, blocking HTTP call.
+- Check SQL logs or profiler if available.
+- Propose a targeted fix: index, pagination, batch, controlled eager loading, cache, explicit timeout, or async processing.
 
-## Commandes utiles
+## Useful Commands
 
-Lancer seulement les commandes adaptées au projet :
+Run only commands adapted to the project:
 
-- `composer test`, `composer phpunit` ou script équivalent si présent
-- `vendor/bin/phpunit --filter NomDuTest`
+- `composer test`, `composer phpunit`, or equivalent script if present
+- `vendor/bin/phpunit --filter TestName`
 - `bin/console about`
 - `bin/console debug:router`
-- `bin/console debug:router nom_route`
+- `bin/console debug:router route_name`
 - `bin/console debug:container Service\\Id`
 - `bin/console debug:event-dispatcher`
 - `bin/console debug:autowiring`
@@ -153,35 +153,35 @@ Lancer seulement les commandes adaptées au projet :
 - `composer diagnose`
 - `composer show vendor/package`
 
-Ne pas lancer de commande destructive (`migrate`, retry massif, purge, truncate, reset DB, cache pool clear prod) sans confirmation explicite.
+Do not run destructive commands (`migrate`, massive retry, purge, truncate, DB reset, prod cache pool clear) without explicit confirmation.
 
-## Corrections attendues
+## Expected Fixes
 
-- Corriger le contrat d'entrée si une donnée invalide arrive depuis une requête, commande, message ou config.
-- Ajouter une garde explicite quand le cas d'erreur est métier.
-- Corriger l'injection de dépendance ou la configuration si le container est la cause.
-- Corriger la requête, le mapping ou la migration si Doctrine est la cause.
-- Corriger la route, le voter, le firewall ou l'authenticator si HTTP/security est la cause.
-- Ajouter un test de non-régression ciblé quand la correction touche un comportement observable.
+- Fix the input contract if invalid data comes from a request, command, message, or config.
+- Add an explicit guard when the error case is business-related.
+- Fix dependency injection or configuration if the container is the cause.
+- Fix the query, mapping, or migration if Doctrine is the cause.
+- Fix the route, voter, firewall, or authenticator if HTTP/security is the cause.
+- Add a targeted regression test when the fix touches observable behavior.
 
-## Ne pas faire
+## Do Not
 
-- Ne pas masquer une exception sans traiter la cause.
-- Ne pas remplacer une erreur par un `return null` silencieux.
-- Ne pas ajouter `@phpstan-ignore`, `@psalm-suppress` ou une assertion mensongère pour contourner le problème.
-- Ne pas supprimer un test en échec sans prouver qu'il est obsolète.
-- Ne pas vider ou modifier des données locales sans accord.
-- Ne pas exposer secrets, tokens, cookies, headers Authorization ou données personnelles dans la réponse.
-- Ne pas supposer que l'erreur vient du cache sans preuve.
+- Do not hide an exception without treating the cause.
+- Do not replace an error with a silent `return null`.
+- Do not add `@phpstan-ignore`, `@psalm-suppress`, or a lying assertion to work around the issue.
+- Do not delete a failing test without proving it is obsolete.
+- Do not clear or modify local data without agreement.
+- Do not expose secrets, tokens, cookies, Authorization headers, or personal data in the response.
+- Do not assume the error comes from cache without proof.
 
-## Format de sortie
+## Output Format
 
-Répondre avec :
+Respond with:
 
-1. **Diagnostic** : cause racine en une phrase, avec niveau de confiance si nécessaire.
-2. **Preuves** : fichiers, lignes, stacktrace, commande ou log qui justifient le diagnostic.
-3. **Correction** : changement appliqué ou patch proposé, limité à la cause.
-4. **Validation** : commande relancée, résultat, ou raison pour laquelle elle n'a pas pu être lancée.
-5. **Prévention** : test de non-régression, garde, monitoring ou règle projet utile.
+1. **Diagnostic**: root cause in one sentence, with confidence level if needed.
+2. **Evidence**: files, lines, stacktrace, command, or log that justify the diagnostic.
+3. **Fix**: applied change or proposed patch, limited to the cause.
+4. **Validation**: rerun command, result, or reason it could not be run.
+5. **Prevention**: regression test, guard, monitoring, or useful project rule.
 
-Si la cause n'est pas encore prouvée, présenter les hypothèses triées par probabilité et l'action de diagnostic suivante pour chacune.
+If the cause is not yet proven, present hypotheses sorted by probability and the next diagnostic action for each.

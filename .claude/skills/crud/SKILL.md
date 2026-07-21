@@ -1,231 +1,231 @@
 ---
 name: crud
-description: "Génère ou complète un CRUD Symfony adapté au projet. Produit entité Doctrine, repository, migration, contrôleur Twig/API, form, DTOs, handlers, templates, tests et fixtures selon l'architecture existante, en respectant sécurité, validation, versions PHP/Symfony et conventions locales."
+description: "Generates or completes a Symfony CRUD adapted to the project. Produces Doctrine entity, repository, migration, Twig/API controller, form, DTOs, handlers, templates, tests, and fixtures according to the existing architecture, while respecting security, validation, PHP/Symfony versions, and local conventions."
 ---
 
-# Génération de CRUD Symfony
+# Symfony CRUD Generation
 
-## Périmètre
+## Scope
 
-Déterminer si l'utilisateur demande :
+Determine whether the user is asking for:
 
-- Un CRUD complet pour une nouvelle ressource.
-- Un CRUD pour une entité Doctrine existante.
-- Un CRUD web Twig, API JSON, API Platform, back-office ou EasyAdmin.
-- Une action ciblée : create, read, update, delete, listing, recherche, export.
-- Une correction ou extension d'un CRUD existant.
+- A complete CRUD for a new resource.
+- A CRUD for an existing Doctrine entity.
+- A Twig web, JSON API, API Platform, back-office, or EasyAdmin CRUD.
+- A targeted action: create, read, update, delete, listing, search, export.
+- A fix or extension of an existing CRUD.
 
-Si le besoin est ambigu, demander le type d'interface attendu et les champs modifiables.
+If the need is ambiguous, ask for the expected interface type and editable fields.
 
-Ne pas générer un CRUD complet si l'utilisateur demande seulement une action ou un endpoint.
+Do not generate a complete CRUD if the user asks only for one action or endpoint.
 
-## État des lieux
+## Current State
 
-Avant de générer, inspecter selon le projet :
+Before generating, inspect according to the project:
 
-- `composer.json` : version PHP, Symfony, Doctrine, Twig, Form, Validator, Security, API Platform, EasyAdmin
-- Architecture : MVC classique, API-only, API Platform, hexagonale, CQRS, back-office
-- Entités, repositories, DTOs, handlers, forms, controllers et templates existants
-- Routing : attributs PHP, annotations, YAML ou XML
-- Sécurité : `security.yaml`, voters, `#[IsGranted]`, access control, rôles existants
-- Doctrine : migrations, conventions de mapping, types custom, relations, index
-- Tests : structure `tests/`, fixtures, base classes, conventions de nommage
-- Templates : layout, composants, partials, pagination, design system existant
+- `composer.json`: PHP, Symfony, Doctrine, Twig, Form, Validator, Security, API Platform, EasyAdmin versions
+- Architecture: classic MVC, API-only, API Platform, hexagonal, CQRS, back office
+- Existing entities, repositories, DTOs, handlers, forms, controllers, and templates
+- Routing: PHP attributes, annotations, YAML, or XML
+- Security: `security.yaml`, voters, `#[IsGranted]`, access control, existing roles
+- Doctrine: migrations, mapping conventions, custom types, relations, indexes
+- Tests: `tests/` structure, fixtures, base classes, naming conventions
+- Templates: layout, components, partials, pagination, existing design system
 
-Ne jamais lire ni modifier `.env.local`.
+Never read or modify `.env.local`.
 
-## Processus
+## Process
 
-1. Comprendre l'entité demandée (champs, types, relations, contraintes)
-2. Détecter l'architecture du projet et la version PHP/Symfony
-3. Identifier les conventions locales avant de créer de nouveaux fichiers
-4. Définir le type de CRUD : Twig, API JSON, API Platform, back-office, CQRS
-5. Générer les fichiers nécessaires dans le bon ordre
-6. Ajouter ou proposer migration, fixtures et tests ciblés
-7. Lancer les validations adaptées si possible
+1. Understand the requested entity (fields, types, relations, constraints).
+2. Detect the project architecture and PHP/Symfony version.
+3. Identify local conventions before creating new files.
+4. Define the CRUD type: Twig, JSON API, API Platform, back office, CQRS.
+5. Generate the required files in the right order.
+6. Add or propose migration, fixtures, and targeted tests.
+7. Run adapted validations if possible.
 
-## Détection du contexte
+## Context Detection
 
-- Templates Twig présents ? -> CRUD web classique
-- API Platform installé ? -> Resource API Platform
-- Uniquement des contrôleurs JSON ? -> CRUD API sans Twig
-- Architecture hexagonale ? -> Séparer Domain/Application/Infrastructure
-- EasyAdmin installé ? -> CRUD back-office via dashboard/controller EasyAdmin
-- DTOs/handlers existants ? -> Ne pas hydrater l'entité directement depuis la requête
-- Projet legacy PHP 7.x/Symfony ancien ? -> Suivre annotations/YAML/XML et éviter attributs PHP 8
-- Projet PHP 8+/Symfony récent ? -> Attributs, readonly, enums ou types modernes seulement si déjà compatibles
+- Twig templates present? -> classic web CRUD
+- API Platform installed? -> API Platform Resource
+- JSON controllers only? -> API CRUD without Twig
+- Hexagonal architecture? -> Separate Domain/Application/Infrastructure
+- EasyAdmin installed? -> Back-office CRUD through EasyAdmin dashboard/controller
+- Existing DTOs/handlers? -> Do not hydrate the entity directly from the request
+- Legacy PHP 7.x / old Symfony project? -> Follow annotations/YAML/XML and avoid PHP 8 attributes
+- PHP 8+ / recent Symfony project? -> Attributes, readonly, enums, or modern types only if already compatible
 
-## Fichiers générés
+## Generated Files
 
-Adapter la liste au contexte réel. Ne pas créer les fichiers inutiles pour le type de CRUD demandé.
+Adapt the list to the real context. Do not create useless files for the requested CRUD type.
 
-### 1. Entité Doctrine
+### 1. Doctrine Entity
 
-- Mapping selon la convention du projet : attributs PHP 8+, annotations, YAML ou XML
-- Contraintes de validation (`#[Assert\NotBlank]`, etc.)
-- Relations si demandées
-- Méthodes métier (pas de setters aveugles si architecture hexagonale)
-- Types Doctrine cohérents : string length, text, decimal, datetime immutable, enum si supporté
-- Champs sensibles exclus des formulaires et sorties publiques par défaut
-- Méthodes d'association qui maintiennent les deux côtés des relations bidirectionnelles
+- Mapping according to project convention: PHP 8+ attributes, annotations, YAML, or XML
+- Validation constraints (`#[Assert\NotBlank]`, etc.)
+- Relations if requested
+- Business methods (no blind setters in hexagonal architecture)
+- Coherent Doctrine types: string length, text, decimal, datetime immutable, enum if supported
+- Sensitive fields excluded from forms and public outputs by default
+- Association methods that maintain both sides of bidirectional relations
 
 ### 2. Repository
 
-- Étend `ServiceEntityRepository`
-- Méthodes `save()` et `remove()` avec flush optionnel
-- Méthodes de recherche spécifiques si identifiables
-- Requêtes paginées ou filtrées si listing, recherche ou tri demandés
-- Pas de logique métier dans le repository
-- Types PHPDoc/generics si PHPStan ou conventions projet les utilisent
+- Extends `ServiceEntityRepository`
+- `save()` and `remove()` methods with optional flush
+- Specific search methods if identifiable
+- Paginated or filtered queries if listing, search, or sorting is requested
+- No business logic in the repository
+- PHPDoc/generics types if PHPStan or project conventions use them
 
 ### 3. Migration
 
-- Générer ou signaler la migration nécessaire après modification d'entité
-- Vérifier `NOT NULL`, valeurs par défaut, contraintes uniques, index et clés étrangères
-- Ajouter un index sur les colonnes utilisées en `WHERE`, `JOIN`, `ORDER BY`
-- Éviter les opérations destructives non demandées
-- Pour une entité existante, ne pas supposer que la table est vide
+- Generate or report the required migration after entity modification
+- Check `NOT NULL`, default values, unique constraints, indexes, and foreign keys
+- Add an index on columns used in `WHERE`, `JOIN`, `ORDER BY`
+- Avoid unrequested destructive operations
+- For an existing entity, do not assume the table is empty
 
-### 4. Contrôleur Twig
+### 4. Twig Controller
 
-- Routes selon la convention du projet : attributs, annotations, YAML ou XML
-- Actions : `index`, `show`, `new`, `edit`, `delete`
-- Contrôle d'accès sur chaque action : `#[IsGranted]`, `denyAccessUnlessGranted`, voter ou `access_control`
-- Flash messages en français
-- Redirection après création/modification/suppression
-- CSRF obligatoire sur suppression et actions mutantes
-- Gestion explicite du `404` via repository nullable ou param converter selon convention
-- Pas de logique métier lourde dans le contrôleur
+- Routes according to project convention: attributes, annotations, YAML, or XML
+- Actions: `index`, `show`, `new`, `edit`, `delete`
+- Access control on each action: `#[IsGranted]`, `denyAccessUnlessGranted`, voter, or `access_control`
+- Flash messages in French
+- Redirect after creation/modification/deletion
+- Mandatory CSRF on deletion and mutating actions
+- Explicit `404` handling through nullable repository or param converter according to convention
+- No heavy business logic in the controller
 
-### 5. Contrôleur API JSON
+### 5. JSON API Controller
 
-- DTO input/output si le projet en utilise ou si l'endpoint est exposé à l'extérieur
-- Validation serveur avant modification
-- Codes HTTP cohérents : `201`, `200`, `204`, `400`, `403`, `404`, `422`
-- Contrôle d'accès par action et vérification propriétaire si nécessaire
-- Ne pas hydrater directement une entité Doctrine depuis une requête externe
-- Mapping input DTO vers entité via handler, service, factory ou processor
+- Input/output DTO if the project uses them or if the endpoint is externally exposed
+- Server-side validation before modification
+- Coherent HTTP statuses: `201`, `200`, `204`, `400`, `403`, `404`, `422`
+- Access control by action and ownership check if needed
+- Do not directly hydrate a Doctrine entity from an external request
+- Map input DTO to entity through handler, service, factory, or processor
 
 ### 6. API Platform
 
-- Respecter les conventions du projet : resource sur entité ou classe dédiée
-- Utiliser provider/processor si la logique dépasse le CRUD trivial
-- Input/output DTO pour protéger le contrat public si nécessaire
-- Security expressions, voters ou processors pour les droits
-- Normalization/denormalization groups seulement si déjà convention projet
+- Respect project conventions: resource on entity or dedicated class
+- Use provider/processor if logic exceeds trivial CRUD
+- Input/output DTO to protect the public contract if needed
+- Security expressions, voters, or processors for permissions
+- Normalization/denormalization groups only if already a project convention
 
 ### 7. Form Type
 
-- Champs typés avec les bons FormType : TextType, DateType, EnumType, EntityType, FileType, MoneyType, etc.
-- Labels en français
-- Contraintes de validation cohérentes avec l'entité
+- Fields typed with the right FormType: TextType, DateType, EnumType, EntityType, FileType, MoneyType, etc.
+- Labels in French
+- Validation constraints coherent with the entity
 - Options (placeholder, required, help)
-- Exclure les champs non modifiables : id, owner, createdAt, updatedAt, rôles sensibles, statut système
-- Gérer upload, enums, relations et champs optionnels explicitement
-- `data_class` cohérent : entité ou DTO selon architecture
+- Exclude non-editable fields: id, owner, createdAt, updatedAt, sensitive roles, system status
+- Handle upload, enums, relations, and optional fields explicitly
+- Coherent `data_class`: entity or DTO according to architecture
 
-### 8. Templates Twig (si web)
+### 8. Twig Templates (if web)
 
-- `index.html.twig` : liste paginée avec tableau
-- `show.html.twig` : détail de l'entité
-- `new.html.twig` : formulaire de création
-- `edit.html.twig` : formulaire de modification
-- `_form.html.twig` : partial formulaire partagé entre new et edit
-- `_delete_form.html.twig` : formulaire de suppression avec confirmation
-- Étendre le layout existant
-- Utiliser les composants, classes CSS et conventions Twig du projet
-- Échapper les données par défaut, éviter `|raw` sauf contenu déjà sanitized
-- Afficher les actions selon les permissions si la convention projet le fait
-- Prévoir état vide, pagination, tri ou recherche si demandés
+- `index.html.twig`: paginated list with table
+- `show.html.twig`: entity details
+- `new.html.twig`: creation form
+- `edit.html.twig`: modification form
+- `_form.html.twig`: shared form partial between new and edit
+- `_delete_form.html.twig`: deletion form with confirmation
+- Extend the existing layout
+- Use the project's components, CSS classes, and Twig conventions
+- Escape data by default, avoid `|raw` unless content is already sanitized
+- Display actions according to permissions if the project convention does so
+- Plan empty state, pagination, sorting, or search if requested
 
-### 9. DTOs, handlers et services
+### 9. DTOs, Handlers, and Services
 
-- DTO input pour create/update si API ou architecture applicative
-- DTO output pour contrat public si API ou serializer sensible
-- Handler/service applicatif pour appliquer les modifications
-- Factory si la création d'entité a des invariants
-- Voter si les droits dépendent de l'objet ou du propriétaire
+- Input DTO for create/update if API or application architecture
+- Output DTO for public contract if API or sensitive serializer
+- Application handler/service to apply modifications
+- Factory if entity creation has invariants
+- Voter if permissions depend on object or owner
 
 ### 10. Tests
 
-- Test unitaire de l'entité : validation, invariants, méthodes métier
-- Test fonctionnel du contrôleur Twig : routes, codes HTTP, redirections, formulaires, CSRF
-- Test API : payload valide, payload invalide, `404`, `403`, `422`, suppression
-- Test sécurité : accès anonyme, rôle insuffisant, IDOR/propriétaire
-- Test repository si requête custom, pagination ou filtre complexe
-- Fixtures minimales adaptées aux scénarios testés
+- Unit test for the entity: validation, invariants, business methods
+- Functional Twig controller test: routes, HTTP codes, redirects, forms, CSRF
+- API test: valid payload, invalid payload, `404`, `403`, `422`, deletion
+- Security test: anonymous access, insufficient role, IDOR/owner
+- Repository test if custom query, pagination, or complex filter
+- Minimal fixtures adapted to tested scenarios
 
 ### 11. Fixtures
 
-- Créer seulement les données nécessaires aux tests ou scénarios
-- Respecter relations, contraintes uniques et validation
-- Utiliser le format déjà présent : DoctrineFixturesBundle, Alice, Foundry ou fixtures dédiées
+- Create only data needed for tests or scenarios
+- Respect relations, unique constraints, and validation
+- Use the format already present: DoctrineFixturesBundle, Alice, Foundry, or dedicated fixtures
 
 ## Conventions
 
-- Nommage des routes : `app_entity_action` (ex: `app_user_index`, `app_user_new`)
-- Nommage des templates : `entity/action.html.twig`
-- Messages flash : `success`, `error`
-- Pagination : KnpPaginatorBundle si installé, sinon pagination manuelle
-- Namespaces, suffixes et dossiers selon les conventions existantes
-- Ne pas introduire un nouveau style si le projet en a déjà un
-- Pour PHP 7.x, ne pas générer d'attributs, enums, readonly ou syntaxe PHP 8
-- Pour Symfony ancien, respecter annotations/YAML/XML si c'est la convention
+- Route naming: `app_entity_action` (ex: `app_user_index`, `app_user_new`)
+- Template naming: `entity/action.html.twig`
+- Flash messages: `success`, `error`
+- Pagination: KnpPaginatorBundle if installed, otherwise manual pagination
+- Namespaces, suffixes, and directories according to existing conventions
+- Do not introduce a new style if the project already has one
+- For PHP 7.x, do not generate attributes, enums, readonly, or PHP 8 syntax
+- For old Symfony, respect annotations/YAML/XML if that is the convention
 
-## Sécurité
+## Security
 
-- Chaque action sensible doit avoir un contrôle d'accès.
-- Pour les ressources propriétaires, vérifier l'accès à l'objet, pas seulement le rôle.
-- Protéger les suppressions avec CSRF côté Twig.
-- Ne pas exposer champs sensibles dans API, templates ou formulaires.
-- Ne pas faire confiance aux ids envoyés par l'utilisateur pour propriétaire, organisation ou tenant.
-- Journaliser ou gérer proprement les actions critiques si le projet le fait déjà.
+- Every sensitive action must have access control.
+- For owner-based resources, check access to the object, not only the role.
+- Protect Twig deletions with CSRF.
+- Do not expose sensitive fields in APIs, templates, or forms.
+- Do not trust IDs sent by the user for owner, organization, or tenant.
+- Log or handle critical actions properly if the project already does so.
 
 ## Validation
 
-- Les règles métier doivent vivre dans l'entité, le domain service ou le handler, pas seulement dans le formulaire.
-- Les contraintes `Assert` doivent correspondre aux contraintes DB.
-- Gérer les champs optionnels, nullables et valeurs par défaut explicitement.
-- Pour les relations, valider que l'entité liée existe et que l'utilisateur peut l'utiliser.
-- Pour les uploads, valider taille, MIME réel, extension et stockage.
+- Business rules must live in the entity, domain service, or handler, not only in the form.
+- `Assert` constraints must match DB constraints.
+- Handle optional fields, nullable fields, and default values explicitly.
+- For relations, validate that the related entity exists and that the user may use it.
+- For uploads, validate size, real MIME type, extension, and storage.
 
-## Ne pas faire
+## Do Not
 
-- Ne pas générer un CRUD complet sans besoin explicite.
-- Ne pas contourner les méthodes métier avec des setters aveugles en architecture domaine.
-- Ne pas hydrater directement une entité Doctrine depuis une requête externe sensible.
-- Ne pas ajouter d'accès admin ou de route mutante sans contrôle d'accès.
-- Ne pas supprimer ou modifier des migrations existantes déjà exécutées sans confirmation.
-- Ne pas modifier `.env.local`.
-- Ne pas introduire une dépendance, un bundle ou une architecture nouvelle sans demande explicite.
-- Ne pas créer une API publique qui expose toute l'entité par défaut.
+- Do not generate a complete CRUD without an explicit need.
+- Do not bypass business methods with blind setters in domain architecture.
+- Do not directly hydrate a Doctrine entity from a sensitive external request.
+- Do not add admin access or a mutating route without access control.
+- Do not delete or modify existing already executed migrations without confirmation.
+- Do not modify `.env.local`.
+- Do not introduce a dependency, bundle, or new architecture without an explicit request.
+- Do not create a public API that exposes the whole entity by default.
 
-## Commandes utiles
+## Useful Commands
 
-Adapter au projet :
+Adapt to the project:
 
-- `bin/console make:entity` ou `make:crud` seulement si le projet l'utilise et si l'utilisateur accepte le scaffold
+- `bin/console make:entity` or `make:crud` only if the project uses it and the user accepts scaffolding
 - `bin/console doctrine:migrations:diff`
 - `bin/console doctrine:migrations:migrate --dry-run`
 - `bin/console doctrine:schema:validate`
 - `bin/console lint:twig templates/`
 - `bin/console lint:container`
-- `vendor/bin/phpunit --filter NomDuTest`
-- PHPStan sur le périmètre modifié si présent
+- `vendor/bin/phpunit --filter TestName`
+- PHPStan on the modified scope if present
 
-Ne pas lancer de migration réelle, purge de base ou commande destructive sans confirmation explicite.
+Do not run a real migration, DB purge, or destructive command without explicit confirmation.
 
-## Format de sortie
+## Output Format
 
-Pour une génération ou modification, fournir :
+For generation or modification, provide:
 
-- Architecture retenue : Twig, API JSON, API Platform, back-office, CQRS
-- Fichiers créés ou modifiés
-- Entité, relations, contraintes et migration nécessaires
-- Sécurité appliquée par action
-- Validation et mapping retenus
-- Tests et fixtures ajoutés ou proposés
-- Commandes lancées et résultat
-- Hypothèses ou limites restantes
+- Chosen architecture: Twig, JSON API, API Platform, back office, CQRS
+- Files created or modified
+- Required entity, relations, constraints, and migration
+- Security applied by action
+- Chosen validation and mapping
+- Tests and fixtures added or proposed
+- Commands run and result
+- Remaining assumptions or limitations
 
-Générer chaque fichier avec son chemin complet, prêt à utiliser, et indiquer l'ordre de création : entité, migration, repository, DTO/handler, controller, form/templates, fixtures, tests.
+Generate each file with its full path, ready to use, and state the creation order: entity, migration, repository, DTO/handler, controller, form/templates, fixtures, tests.

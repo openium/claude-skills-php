@@ -1,166 +1,166 @@
 ---
 name: observability
-description: "Audite et améliore l'observabilité d'un projet PHP/Symfony. Analyse logs Monolog, erreurs, métriques, traces, correlation IDs, Sentry, Messenger, HTTP clients, données sensibles et alerting pour diagnostiquer la production sans exposer de secrets."
+description: "Audits and improves observability in a PHP/Symfony project. Analyzes Monolog logs, errors, metrics, traces, correlation IDs, Sentry, Messenger, HTTP clients, sensitive data, and alerting to diagnose production without exposing secrets."
 ---
 
-# Observabilité PHP/Symfony
+# PHP/Symfony Observability
 
-## Périmètre
+## Scope
 
-Déterminer si l'utilisateur demande :
+Determine whether the user is asking for:
 
-- Audit des logs, erreurs, traces ou métriques.
-- Ajout de logs autour d'un flux métier, endpoint, commande ou handler Messenger.
-- Intégration ou correction Sentry, Monolog, OpenTelemetry, Prometheus ou outil équivalent.
-- Diagnostic d'un manque d'information en production.
-- Réduction de bruit ou fuite de données sensibles dans les logs.
+- An audit of logs, errors, traces, or metrics.
+- Adding logs around a business flow, endpoint, command, or Messenger handler.
+- Integrating or fixing Sentry, Monolog, OpenTelemetry, Prometheus, or an equivalent tool.
+- Diagnosing missing information in production.
+- Reducing noise or sensitive data leakage in logs.
 
-Si aucun périmètre n'est donné :
+If no scope is given:
 
-- Lire `git status` et le diff si l'audit porte sur les changements récents.
-- Inspecter Monolog/config et les chemins critiques modifiés.
-- Demander le flux ou l'incident à rendre observable si nécessaire.
+- Read `git status` and the diff if the audit concerns recent changes.
+- Inspect Monolog/config and modified critical paths.
+- Ask for the flow or incident that needs to become observable if necessary.
 
-Ne pas lire ni afficher `.env.local`, DSN, tokens ou données personnelles sensibles.
+Do not read or display `.env.local`, DSNs, tokens, or sensitive personal data.
 
-## État des lieux
+## Current State
 
-Inspecter selon le projet :
+Inspect according to the project:
 
-- `composer.json` : MonologBundle, Sentry, OpenTelemetry, Prometheus, Messenger, HttpClient
+- `composer.json`: MonologBundle, Sentry, OpenTelemetry, Prometheus, Messenger, HttpClient
 - `config/packages/monolog.yaml`, `sentry.yaml`, messenger, framework/http_client
-- Services, controllers, commands, handlers, listeners et clients externes concernés
-- Logs existants, processors Monolog, channels, handlers, format JSON ou texte
-- CI/prod config si l'observabilité est déployée par environnement
-- Tests qui vérifient logs ou comportements d'erreur si présents
+- Affected services, controllers, commands, handlers, listeners, and external clients
+- Existing logs, Monolog processors, channels, handlers, JSON or text format
+- CI/prod config if observability is deployed by environment
+- Tests that verify logs or error behavior if present
 
-Ne jamais exposer de secret ou payload sensible en réponse.
+Never expose a secret or sensitive payload in the response.
 
-## Objectifs
+## Goals
 
-Une bonne observabilité doit permettre de répondre :
+Good observability must make it possible to answer:
 
-- Qu'est-ce qui a échoué ?
-- Pour quel utilisateur, tenant, organisation ou ressource, sans exposer de donnée sensible ?
-- Quelle entrée métier ou identifiant stable permet de retrouver le contexte ?
-- Quelle dépendance externe ou composant est impliqué ?
-- Est-ce transitoire, permanent, métier ou technique ?
-- Comment corréler logs, traces, métriques et message Messenger ?
+- What failed?
+- For which user, tenant, organization, or resource, without exposing sensitive data?
+- Which business input or stable identifier can retrieve the context?
+- Which external dependency or component is involved?
+- Is it transient, permanent, business-related, or technical?
+- How can logs, traces, metrics, and Messenger messages be correlated?
 
-## Sévérités
+## Severities
 
-- **Bloquant** : fuite de secrets/PII, erreur critique silencieuse, exception avalée, paiement/email/écriture critique non traçable, logs contenant tokens.
-- **Important** : absence de correlation ID, logs insuffisants sur flux critique, bruit massif, métrique ou alerte manquante, failed messages non observables.
-- **Suggestion** : enrichissement de contexte, nommage, channel dédié, structuration JSON, dashboard ou alerte utile.
+- **Blocking**: secret/PII leak, silent critical error, swallowed exception, critical payment/email/write flow not traceable, logs containing tokens.
+- **Important**: missing correlation ID, insufficient logs on a critical flow, massive noise, missing metric or alert, failed messages not observable.
+- **Suggestion**: context enrichment, naming, dedicated channel, JSON structure, useful dashboard or alert.
 
 ## Logs
 
-- Utiliser des logs structurés avec contexte plutôt que concaténer des chaînes.
-- Inclure identifiants stables : request id, user id, tenant id, entity id, message id, external id.
-- Ne pas logger mots de passe, tokens, cookies, Authorization header, DSN, payload complet sensible ou données personnelles non nécessaires.
-- Choisir le niveau correct : debug, info, notice, warning, error, critical.
-- Éviter les logs en boucle ou sur chemin chaud sans garde.
-- Utiliser channels Monolog dédiés pour flux critiques si le projet le fait déjà.
-- Ne pas avaler une exception après log si le retry/failure doit se déclencher.
+- Use structured logs with context instead of concatenating strings.
+- Include stable identifiers: request id, user id, tenant id, entity id, message id, external id.
+- Do not log passwords, tokens, cookies, Authorization header, DSN, complete sensitive payload, or unnecessary personal data.
+- Choose the correct level: debug, info, notice, warning, error, critical.
+- Avoid logs inside loops or hot paths without a guard.
+- Use dedicated Monolog channels for critical flows if the project already does so.
+- Do not swallow an exception after logging if retry/failure must be triggered.
 
-## Erreurs et exceptions
+## Errors and Exceptions
 
-- Distinguer erreur métier attendue et incident technique.
-- Ne pas masquer une exception par un retour silencieux.
-- Ajouter contexte métier aux exceptions ou aux logs, sans fuite sensible.
-- Vérifier que les erreurs critiques remontent vers l'outil d'alerting.
-- Pour API, ne pas exposer stacktrace ou détails internes au client.
-- Pour commandes, retourner un code de sortie cohérent.
+- Distinguish expected business errors from technical incidents.
+- Do not hide an exception behind a silent return.
+- Add business context to exceptions or logs without leaking sensitive data.
+- Check that critical errors reach the alerting tool.
+- For APIs, do not expose stacktraces or internal details to the client.
+- For commands, return a coherent exit code.
 
-## Correlation IDs et traces
+## Correlation IDs and Traces
 
-- Vérifier propagation d'un request id / correlation id.
-- Propager le contexte vers appels HTTP sortants si convention projet.
-- Propager un identifiant de corrélation dans les messages Messenger si utile.
-- Éviter de générer un nouvel id à chaque couche si un id existe déjà.
-- Pour OpenTelemetry/APM, instrumenter les frontières : HTTP, DB, queue, clients externes.
+- Check propagation of a request id / correlation id.
+- Propagate context to outgoing HTTP calls if this is a project convention.
+- Propagate a correlation identifier in Messenger messages if useful.
+- Avoid generating a new id at every layer if one already exists.
+- For OpenTelemetry/APM, instrument boundaries: HTTP, DB, queue, external clients.
 
-## Metrics et alerting
+## Metrics and Alerting
 
-- Identifier les métriques utiles : taux d'erreur, latence, durée de job, backlog queue, failed messages, retries, timeouts externes.
-- Ajouter des métriques métier seulement si elles servent une alerte ou un dashboard.
-- Prévoir labels à cardinalité maîtrisée : pas d'email, UUID utilisateur massif ou payload dynamique en label.
-- Définir seuils et symptômes, pas seulement compteur brut.
-- Éviter les alertes trop bruyantes qui ne déclenchent aucune action.
+- Identify useful metrics: error rate, latency, job duration, queue backlog, failed messages, retries, external timeouts.
+- Add business metrics only if they support an alert or dashboard.
+- Plan labels with controlled cardinality: no email, massive user UUID, or dynamic payload as labels.
+- Define thresholds and symptoms, not only raw counters.
+- Avoid noisy alerts that trigger no action.
 
-## Messenger et async
+## Messenger and Async
 
-- Logger début/fin/échec des handlers critiques avec message id et identifiants métier.
-- Observer retry count, failed transport, durée de traitement et mémoire si pertinent.
-- Ne pas logger le message complet si payload sensible.
-- Différencier erreur transitoire et permanente.
-- Conserver l'exception pour que Messenger puisse retry/failure si nécessaire.
-- Vérifier que `messenger:failed:*` ou dashboard équivalent est exploitable.
+- Log start/end/failure of critical handlers with message id and business identifiers.
+- Observe retry count, failed transport, processing duration, and memory if relevant.
+- Do not log the complete message if the payload is sensitive.
+- Differentiate transient and permanent errors.
+- Preserve the exception so Messenger can retry/fail if necessary.
+- Check that `messenger:failed:*` or an equivalent dashboard is usable.
 
-## HTTP clients et dépendances externes
+## HTTP Clients and External Dependencies
 
-- Toujours avoir timeout explicite.
-- Logger service cible, opération, statut, durée, retry count et correlation id.
-- Ne pas logger headers sensibles ni payload complet par défaut.
-- Classer erreurs réseau, 4xx métier, 5xx fournisseur et timeout.
-- Ajouter métriques ou traces sur dépendances critiques.
+- Always have an explicit timeout.
+- Log target service, operation, status, duration, retry count, and correlation id.
+- Do not log sensitive headers or complete payloads by default.
+- Classify network errors, business 4xx, provider 5xx, and timeouts.
+- Add metrics or traces on critical dependencies.
 
-## Sécurité et conformité
+## Security and Compliance
 
-- Redacter secrets, tokens, cookies, Authorization, reset-password tokens, magic links.
-- Limiter données personnelles : email complet, téléphone, adresse, nom complet seulement si nécessaire et autorisé.
-- Vérifier logs d'emails, webhooks, paiements, fichiers uploadés.
-- Éviter d'envoyer données sensibles vers services tiers d'observabilité sans filtrage.
-- Ne pas lire `.env.local` pour vérifier un DSN.
+- Redact secrets, tokens, cookies, Authorization, reset-password tokens, magic links.
+- Limit personal data: full email, phone, address, full name only if necessary and authorized.
+- Check logs for emails, webhooks, payments, uploaded files.
+- Avoid sending sensitive data to third-party observability services without filtering.
+- Do not read `.env.local` to check a DSN.
 
-## Tests et validation
+## Tests and Validation
 
-Prévoir selon le changement :
+Plan according to the change:
 
-- Test que l'exception n'est pas avalée.
-- Test qu'un événement critique logge le contexte attendu.
-- Test que données sensibles ne sont pas dans le contexte loggé si facilement testable.
-- Test fonctionnel d'erreur API sans fuite de stacktrace.
-- Test handler Messenger sur erreur transitoire/permanente.
+- Test that the exception is not swallowed.
+- Test that a critical event logs the expected context.
+- Test that sensitive data is not in the logged context if easily testable.
+- Functional test for API errors without stacktrace leakage.
+- Messenger handler test on transient/permanent error.
 
-Commandes utiles :
+Useful commands:
 
 - `bin/console debug:config monolog`
 - `bin/console debug:container monolog`
 - `bin/console debug:event-dispatcher`
 - `bin/console messenger:failed:show`
-- Tests ciblés
+- Targeted tests
 
-Ne pas déclencher d'appels externes réels ou alertes production sans confirmation explicite.
+Do not trigger real external calls or production alerts without explicit confirmation.
 
-## Ne pas faire
+## Do Not
 
-- Ne pas logger des secrets ou payloads complets pour "debugger vite".
-- Ne pas remplacer une exception par un simple log.
-- Ne pas ajouter des logs verbeux sur chemin chaud sans niveau ou sampling adapté.
-- Ne pas créer des métriques à cardinalité incontrôlée.
-- Ne pas envoyer de données personnelles à un outil tiers sans filtrage.
-- Ne pas modifier `.env.local`.
-- Ne pas ajouter une dépendance d'observabilité sans demande explicite.
+- Do not log secrets or complete payloads to "debug quickly".
+- Do not replace an exception with a simple log.
+- Do not add verbose logs on hot paths without an appropriate level or sampling.
+- Do not create metrics with uncontrolled cardinality.
+- Do not send personal data to a third-party tool without filtering.
+- Do not modify `.env.local`.
+- Do not add an observability dependency without an explicit request.
 
-## Format de sortie
+## Output Format
 
-Présenter les findings triés par sévérité décroissante.
+Present findings sorted by decreasing severity.
 
-Pour chaque finding :
+For each finding:
 
-- Fichier et ligne
-- Sévérité : bloquant, important ou suggestion
-- Catégorie : logs, erreurs, traces, metrics, alerting, Messenger, HTTP client, sécurité
-- Preuve vérifiée
-- Impact opérationnel
-- Correction proposée
-- Test ou vérification conseillé
+- File and line
+- Severity: blocking, important, or suggestion
+- Category: logs, errors, traces, metrics, alerting, Messenger, HTTP client, security
+- Verified evidence
+- Operational impact
+- Proposed fix
+- Recommended test or verification
 
-Après modification, résumer :
+After modification, summarize:
 
-- Fichiers modifiés
-- Contexte ajouté ou retiré
-- Données sensibles protégées
-- Commandes/tests lancés
-- Limites restantes
+- Modified files
+- Context added or removed
+- Sensitive data protected
+- Commands/tests run
+- Remaining limitations

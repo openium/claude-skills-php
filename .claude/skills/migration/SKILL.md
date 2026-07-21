@@ -1,179 +1,179 @@
 ---
 name: migration
-description: "Analyse les migrations Doctrine d'un projet PHP/Symfony. Détecte pertes de données, incohérences up/down, verrous longs, opérations non zero-downtime, index manquants et migrations incompatibles avec PostgreSQL, MySQL ou MariaDB."
+description: "Analyzes Doctrine migrations in a PHP/Symfony project. Detects data loss, up/down inconsistencies, long locks, non-zero-downtime operations, missing indexes, and migrations incompatible with PostgreSQL, MySQL, or MariaDB."
 ---
 
-# Vérification des migrations Doctrine
+# Doctrine Migration Check
 
-## Périmètre
+## Scope
 
-Si l'utilisateur précise une migration, un dossier, un diff, une branche ou une PR, analyser uniquement ce périmètre.
+If the user specifies a migration, directory, diff, branch, or PR, analyze only that scope.
 
-Sinon :
+Otherwise:
 
-- Lire `git status`.
-- Analyser les migrations modifiées dans `migrations/` ou `src/Migrations/`.
-- À défaut, analyser la migration la plus récente.
-- Si aucune migration n'existe ou si le périmètre est ambigu, demander le fichier à vérifier.
+- Read `git status`.
+- Analyze modified migrations in `migrations/` or `src/Migrations/`.
+- Otherwise, analyze the most recent migration.
+- If no migration exists or the scope is ambiguous, ask for the file to check.
 
-Ne pas modifier une migration déjà exécutée en production sans validation explicite. Dans ce cas, recommander une nouvelle migration corrective.
+Do not modify a migration already executed in production without explicit validation. In that case, recommend a new corrective migration.
 
-## État des lieux
+## Current State
 
-Avant de conclure, inspecter selon le projet :
+Before concluding, inspect according to the project:
 
-- Version Doctrine Migrations et configuration (`doctrine_migrations.yaml`, `migrations_paths`)
-- SGBD cible : PostgreSQL, MySQL, MariaDB ou autre
-- Entités Doctrine liées au changement
-- Repositories, requêtes, contrôleurs, DTO, serializers ou templates qui utilisent les colonnes touchées
-- Contraintes existantes : clés étrangères, uniques, index, `NOT NULL`, valeurs par défaut
-- Données potentiellement volumineuses ou tables critiques
+- Doctrine Migrations version and configuration (`doctrine_migrations.yaml`, `migrations_paths`)
+- Target DBMS: PostgreSQL, MySQL, MariaDB, or other
+- Doctrine entities related to the change
+- Repositories, queries, controllers, DTOs, serializers, or templates that use the affected columns
+- Existing constraints: foreign keys, unique constraints, indexes, `NOT NULL`, default values
+- Potentially large data or critical tables
 
-Ne jamais lire `.env.local`. Si le SGBD n'est pas identifiable, signaler l'hypothèse utilisée.
+Never read `.env.local`. If the DBMS cannot be identified, state the hypothesis used.
 
-## Processus
+## Process
 
-1. Identifier les méthodes `up()` et `down()`, les requêtes SQL et les appels Doctrine DBAL.
-2. Classer chaque opération : création, suppression, renommage, modification de type, contrainte, index, backfill, update massif.
-3. Vérifier la perte de données, la réversibilité, les verrous, la durée probable et la compatibilité applicative.
-4. Contrôler la cohérence avec les entités et le code encore susceptible de tourner pendant le déploiement.
-5. Proposer une correction ou une stratégie en plusieurs migrations si nécessaire.
+1. Identify `up()` and `down()` methods, SQL queries, and Doctrine DBAL calls.
+2. Classify each operation: creation, deletion, rename, type modification, constraint, index, backfill, massive update.
+3. Check data loss, reversibility, locks, probable duration, and application compatibility.
+4. Check consistency with entities and code that may still run during deployment.
+5. Propose a fix or multi-migration strategy if needed.
 
-## Sévérités
+## Severities
 
-- **Bloquant** : perte de données possible, migration non réversible alors qu'elle devrait l'être, rupture applicative probable, SQL invalide pour le SGBD cible, migration déjà exécutée modifiée.
-- **Important** : verrou long probable, opération non zero-downtime, index manquant sur table volumineuse, backfill massif non borné, `down()` incomplet mais acceptable seulement avec justification.
-- **Suggestion** : lisibilité, regroupement d'opérations, commentaire utile, amélioration de nommage ou de robustesse sans risque immédiat.
+- **Blocking**: possible data loss, non-reversible migration when it should be reversible, probable application break, SQL invalid for the target DBMS, already executed migration modified.
+- **Important**: probable long lock, non-zero-downtime operation, missing index on large table, unbounded massive backfill, incomplete `down()` acceptable only with justification.
+- **Suggestion**: readability, grouping operations, useful comment, naming or robustness improvement without immediate risk.
 
-## Critères d'analyse
+## Analysis Criteria
 
-### Perte de données (bloquant)
+### Data Loss (blocking)
 
-- `DROP TABLE` sans vérification que la table est vide ou que les données ont été migrées
-- `DROP COLUMN` sans migration de données préalable
-- `TRUNCATE` dans une migration
-- Modification de type de colonne qui tronque des données (VARCHAR(255) vers VARCHAR(50))
-- Suppression d'une contrainte UNIQUE qui pourrait créer des doublons
-- Suppression d'une clé étrangère sans vérifier les écritures applicatives concurrentes
-- Renommage de table ou colonne sans période de compatibilité
-- `UPDATE` qui écrase une valeur existante sans condition de sécurité
-- `DELETE` sans clause `WHERE` ou sans sauvegarde/migration de données
+- `DROP TABLE` without checking the table is empty or data was migrated
+- `DROP COLUMN` without prior data migration
+- `TRUNCATE` in a migration
+- Column type modification that truncates data (VARCHAR(255) to VARCHAR(50))
+- Removing a UNIQUE constraint that could create duplicates
+- Removing a foreign key without checking concurrent application writes
+- Table or column rename without compatibility period
+- `UPDATE` that overwrites an existing value without a safety condition
+- `DELETE` without `WHERE` clause or without backup/data migration
 
-### Cohérence Doctrine et applicative (bloquant)
+### Doctrine and Application Consistency (blocking)
 
-- Migration absente alors qu'une entité modifie le schéma
-- Migration présente mais entité non cohérente avec le schéma final
-- Colonne supprimée encore référencée dans le code, une requête DQL/SQL, un serializer, un formulaire ou un template
-- Contrainte `NOT NULL` ajoutée alors que le code peut encore écrire `NULL`
-- Nouvelle relation Doctrine sans clé étrangère, index ou stratégie de cascade cohérente
-- Changement de nom de table, colonne ou index incompatible avec les conventions Doctrine du projet
+- Missing migration while an entity modifies the schema
+- Migration present but entity inconsistent with the final schema
+- Removed column still referenced in code, a DQL/SQL query, serializer, form, or template
+- `NOT NULL` constraint added while code can still write `NULL`
+- New Doctrine relation without coherent foreign key, index, or cascade strategy
+- Table, column, or index rename incompatible with the project's Doctrine conventions
 
-### Cohérence up/down (bloquant)
+### Up/Down Consistency (blocking)
 
-- Méthode `down()` absente
-- `down()` qui ne fait pas l'inverse exact de `up()`
-- `down()` qui tente de recréer une colonne supprimée sans restaurer les données
-- `down()` qui supprime des données créées avant la migration
-- Ordre de suppression incohérent avec les clés étrangères
-- Types, valeurs par défaut, nullabilité, contraintes ou index non restaurés
+- Missing `down()` method
+- `down()` does not exactly reverse `up()`
+- `down()` tries to recreate a deleted column without restoring data
+- `down()` deletes data created before the migration
+- Deletion order inconsistent with foreign keys
+- Types, default values, nullability, constraints, or indexes not restored
 
-Si l'opération est volontairement non réversible, le `down()` doit contenir une exception explicite ou un commentaire clair, et le risque doit être signalé.
+If the operation is intentionally non-reversible, `down()` must contain an explicit exception or clear comment, and the risk must be reported.
 
 ### Performance (important)
 
-- `ALTER TABLE` sur une table volumineuse (> 1M lignes) sans estimation de temps
-- Ajout d'index sur une grosse table sans `CONCURRENTLY` (PostgreSQL) ou équivalent
-- Plusieurs `ALTER TABLE` sur la même table au lieu d'un seul
-- `UPDATE` massif sans clause `WHERE` limitante
-- Backfill sans batch, limite, reprise possible ou condition idempotente
-- Ajout d'une colonne `NOT NULL DEFAULT` susceptible de réécrire toute la table selon le SGBD/version
-- Création de clé étrangère ou contrainte unique sans index préalable adapté
-- Validation de contrainte sur table volumineuse sans phase `NOT VALID` puis `VALIDATE CONSTRAINT` quand PostgreSQL le permet
-- Transaction longue qui combine DDL, backfill et contraintes sur une table critique
+- `ALTER TABLE` on a large table (> 1M rows) without duration estimate
+- Adding an index on a large table without `CONCURRENTLY` (PostgreSQL) or equivalent
+- Several `ALTER TABLE` statements on the same table instead of one
+- Massive `UPDATE` without limiting `WHERE` clause
+- Backfill without batch, limit, resumability, or idempotent condition
+- Adding a `NOT NULL DEFAULT` column that may rewrite the whole table depending on DBMS/version
+- Creating a foreign key or unique constraint without a suitable prior index
+- Constraint validation on a large table without `NOT VALID` then `VALIDATE CONSTRAINT` phase when PostgreSQL allows it
+- Long transaction combining DDL, backfill, and constraints on a critical table
 
 ### Zero-downtime (important)
 
-- Renommage de colonne (casse l'ancien code encore en prod)
-- Suppression de colonne encore référencée dans le code
-- Ajout de colonne NOT NULL sans valeur par défaut
-- Modification de type de colonne
-- Renommage de table
-- Changement d'enum, check constraint ou valeur autorisée avant le déploiement du code compatible
-- Ajout de contrainte unique sans nettoyage préalable des doublons
-- Migration qui suppose que tout le trafic applicatif est arrêté
-- Dépendance au déploiement exact code + migration dans le même instant
+- Column rename (breaks old code still in prod)
+- Removing a column still referenced by code
+- Adding a NOT NULL column without default value
+- Column type modification
+- Table rename
+- Enum, check constraint, or allowed value change before deploying compatible code
+- Adding a unique constraint without prior duplicate cleanup
+- Migration assuming all application traffic is stopped
+- Dependency on exact code + migration deployment at the same instant
 
-## Points spécifiques par SGBD
+## DBMS-specific Points
 
 ### PostgreSQL
 
-- Utiliser `CREATE INDEX CONCURRENTLY` et `DROP INDEX CONCURRENTLY` pour les gros index quand possible.
-- Désactiver la transaction Doctrine pour les index concurrents avec `public function isTransactional(): bool { return false; }`.
-- Préférer `ADD CONSTRAINT ... NOT VALID` puis `VALIDATE CONSTRAINT` pour réduire les verrous.
-- Vérifier les locks des `ALTER TYPE`, `ALTER TABLE ... SET NOT NULL`, `DROP COLUMN`, `RENAME COLUMN`.
-- Éviter les `USING` casts destructifs sans contrôle des données.
+- Use `CREATE INDEX CONCURRENTLY` and `DROP INDEX CONCURRENTLY` for large indexes when possible.
+- Disable Doctrine transaction for concurrent indexes with `public function isTransactional(): bool { return false; }`.
+- Prefer `ADD CONSTRAINT ... NOT VALID` then `VALIDATE CONSTRAINT` to reduce locks.
+- Check locks for `ALTER TYPE`, `ALTER TABLE ... SET NOT NULL`, `DROP COLUMN`, `RENAME COLUMN`.
+- Avoid destructive `USING` casts without data checks.
 
-### MySQL et MariaDB
+### MySQL and MariaDB
 
-- Vérifier l'impact de `ALTER TABLE` selon le moteur, la version, `ALGORITHM=INPLACE/INSTANT` et `LOCK=NONE`.
-- Anticiper la copie de table sur les modifications de type, d'index ou de nullabilité.
-- Vérifier les longueurs d'index avec `utf8mb4`.
-- Préserver les options exactes de colonne dans `down()` : type, collation, charset, default, nullable, unsigned.
-- Pour les tables volumineuses, recommander une stratégie online schema change si le projet en dispose.
+- Check `ALTER TABLE` impact according to engine, version, `ALGORITHM=INPLACE/INSTANT`, and `LOCK=NONE`.
+- Anticipate table copy on type, index, or nullability modifications.
+- Check index lengths with `utf8mb4`.
+- Preserve exact column options in `down()`: type, collation, charset, default, nullable, unsigned.
+- For large tables, recommend an online schema change strategy if the project has one.
 
-## Pattern zero-downtime recommandé
+## Recommended Zero-downtime Pattern
 
-Pour les opérations destructives ou incompatibles avec l'ancien code, recommander un déploiement en plusieurs étapes :
+For destructive operations or operations incompatible with old code, recommend a multi-step deployment:
 
-1. Migration A : ajouter la nouvelle colonne/table/contrainte permissive, sans supprimer l'ancien schéma.
-2. Déploiement A : code compatible qui lit l'ancien et le nouveau, ou écrit dans les deux.
-3. Backfill : migrer les données par batch, de manière idempotente et reprise possible.
-4. Déploiement B : code qui ne dépend plus de l'ancien schéma.
-5. Migration B : supprimer l'ancien schéma ou rendre la contrainte stricte.
+1. Migration A: add the new column/table/permissive constraint, without removing the old schema.
+2. Deployment A: compatible code that reads old and new, or writes to both.
+3. Backfill: migrate data by batch, idempotently and resumably.
+4. Deployment B: code that no longer depends on the old schema.
+5. Migration B: remove the old schema or make the constraint strict.
 
-## Requêtes et données
+## Queries and Data
 
-- Les requêtes de backfill doivent être idempotentes.
-- Les migrations qui modifient des données métier doivent être explicitement justifiées.
-- Les `UPDATE` et `DELETE` doivent avoir une clause `WHERE` précise ou une justification.
-- Les valeurs par défaut doivent être compatibles avec les règles métier et la validation Symfony.
-- Les migrations ne doivent pas dépendre de services applicatifs instables, du container Symfony ou de données externes.
+- Backfill queries must be idempotent.
+- Migrations that modify business data must be explicitly justified.
+- `UPDATE` and `DELETE` statements must have a precise `WHERE` clause or justification.
+- Default values must be compatible with business rules and Symfony validation.
+- Migrations must not depend on unstable application services, the Symfony container, or external data.
 
-## Commandes utiles
+## Useful Commands
 
-Adapter les commandes au projet, sans installer de dépendance sans demande explicite :
+Adapt commands to the project, without installing a dependency unless explicitly requested:
 
 - `bin/console doctrine:migrations:status`
 - `bin/console doctrine:migrations:diff`
 - `bin/console doctrine:migrations:migrate --dry-run`
 - `bin/console doctrine:schema:validate`
 - `bin/console doctrine:schema:update --dump-sql`
-- Tests ciblés des repositories, services ou endpoints touchés
+- Targeted tests for affected repositories, services, or endpoints
 
-Rapporter les commandes lancées, leur résultat et les limites éventuelles.
+Report commands run, their result, and possible limitations.
 
-## Ne pas faire
+## Do Not
 
-- Ne pas considérer une migration comme sûre uniquement parce qu'elle a été générée par Doctrine.
-- Ne pas ignorer les `down()` incohérents.
-- Ne pas proposer de supprimer des données sans stratégie de sauvegarde ou migration préalable.
-- Ne pas mélanger refactor applicatif large et correction de migration si ce n'est pas nécessaire.
-- Ne pas modifier une migration historisée ou déjà exécutée sans confirmation.
-- Ne pas masquer un risque zero-downtime par un simple commentaire.
+- Do not consider a migration safe only because Doctrine generated it.
+- Do not ignore inconsistent `down()` methods.
+- Do not propose deleting data without a backup or prior migration strategy.
+- Do not mix broad application refactoring and migration fix unless necessary.
+- Do not modify a historized or already executed migration without confirmation.
+- Do not hide a zero-downtime risk behind a simple comment.
 
-## Format de sortie
+## Output Format
 
-Présenter les findings en premier, triés par sévérité décroissante.
+Present findings first, sorted by decreasing severity.
 
-Pour chaque finding :
+For each finding:
 
-- Fichier et ligne
-- Sévérité : bloquant, important ou suggestion
-- Opération SQL concernée
-- Preuve vérifiée dans la migration ou le code
-- Impact concret : données, disponibilité, rollback ou compatibilité applicative
-- Correction proposée
-- Stratégie zero-downtime si applicable
-- Test ou commande de validation conseillé
+- File and line
+- Severity: blocking, important, or suggestion
+- Affected SQL operation
+- Evidence verified in the migration or code
+- Concrete impact: data, availability, rollback, or application compatibility
+- Proposed fix
+- Zero-downtime strategy if applicable
+- Recommended validation test or command
 
-Si aucun problème n'est trouvé, le dire clairement et mentionner le SGBD supposé, les commandes non lancées et les limites de l'analyse.
+If no issue is found, say so clearly and mention the assumed DBMS, commands not run, and analysis limitations.

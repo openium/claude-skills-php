@@ -1,127 +1,127 @@
 ---
 name: phpstan
-description: "Corrige les erreurs PHPStan dans un projet PHP/Symfony. Analyse un rapport, un fichier ou le projet, interprète les erreurs de typage, generics, Doctrine, Symfony et applique des corrections sans @phpstan-ignore, sans réduire le niveau et sans aggraver la baseline."
+description: "Fixes PHPStan errors in a PHP/Symfony project. Analyzes a report, file, or project; interprets typing, generics, Doctrine, and Symfony errors; and applies fixes without @phpstan-ignore, without lowering the level, and without worsening the baseline."
 ---
 
-# Correction des erreurs PHPStan
+# Fixing PHPStan Errors
 
-## Périmètre
+## Scope
 
-Si l'utilisateur fournit une erreur PHPStan, corriger cette erreur en priorité.
+If the user provides a PHPStan error, fix that error first.
 
-Si l'utilisateur précise un fichier ou dossier, limiter l'analyse à ce périmètre.
+If the user specifies a file or directory, limit the analysis to that scope.
 
-Sinon, utiliser la commande PHPStan du projet si elle existe. Ne pas installer PHPStan sans demande explicite.
+Otherwise, use the project's PHPStan command if it exists. Do not install PHPStan without an explicit request.
 
-## État des lieux
+## Current State
 
-Avant de corriger, inspecter selon le projet :
+Before fixing, inspect according to the project:
 
-- `phpstan.neon`, `phpstan.neon.dist` et fichiers inclus
-- `composer.json` : scripts, version PHP, dépendances PHPStan
-- Niveau PHPStan actuel, chemins analysés, extensions Symfony/Doctrine/PHPUnit
-- Baseline éventuelle et règles custom
+- `phpstan.neon`, `phpstan.neon.dist`, and included files
+- `composer.json`: scripts, PHP version, PHPStan dependencies
+- Current PHPStan level, analyzed paths, Symfony/Doctrine/PHPUnit extensions
+- Any baseline and custom rules
 
-Ne pas modifier le niveau, `ignoreErrors`, la baseline ou les chemins analysés pour faire disparaître une erreur.
+Do not modify the level, `ignoreErrors`, the baseline, or analyzed paths to make an error disappear.
 
-## Processus
+## Process
 
-1. Reproduire l'erreur ou lire le message PHPStan exact.
-2. Identifier le fichier, la ligne, le type attendu et le type réellement possible.
-3. Lire le code appelé et les usages publics avant de modifier une signature.
-4. Corriger la cause racine : type, contrôle de flux, validation, initialisation ou contrat.
-5. Relancer PHPStan sur le périmètre ciblé si possible.
-6. Lancer les tests ciblés si le comportement runtime peut être impacté.
+1. Reproduce the error or read the exact PHPStan message.
+2. Identify the file, line, expected type, and actually possible type.
+3. Read called code and public usages before modifying a signature.
+4. Fix the root cause: type, control flow, validation, initialization, or contract.
+5. Rerun PHPStan on the targeted scope if possible.
+6. Run targeted tests if runtime behavior may be impacted.
 
-## Règles absolues
+## Absolute Rules
 
-- Ne JAMAIS ajouter `@phpstan-ignore-*` pour masquer une erreur
-- Ne JAMAIS réduire le niveau PHPStan dans la configuration
-- Ne JAMAIS ajouter d'entrée dans `ignoreErrors` du fichier `phpstan.neon`
-- Chaque correction doit résoudre le problème réel, pas le symptôme
-- Ne pas ajouter `mixed`, `array` ou `object` si un type précis est disponible
-- Ne pas rendre nullable uniquement pour satisfaire PHPStan
-- Ne pas ajouter de `@var` mensonger
-- Ne pas changer le comportement métier pour satisfaire le typage
-- Ne pas supprimer du code mort sans vérifier les usages indirects Symfony, Doctrine, Serializer ou reflection
+- NEVER add `@phpstan-ignore-*` to hide an error.
+- NEVER lower the PHPStan level in configuration.
+- NEVER add an entry to `ignoreErrors` in `phpstan.neon`.
+- Each fix must solve the real problem, not the symptom.
+- Do not add `mixed`, `array`, or `object` if a precise type is available.
+- Do not make something nullable only to satisfy PHPStan.
+- Do not add a lying `@var`.
+- Do not change business behavior to satisfy typing.
+- Do not delete dead code without checking indirect Symfony, Doctrine, Serializer, or reflection usages.
 
-## Corrections courantes
+## Common Fixes
 
-### Appel de méthode sur un type nullable
+### Method Call on a Nullable Type
 
-- Ne pas utiliser `?->` comme solution par défaut.
-- Si null est impossible, corriger le contrat ou ajouter une garde explicite.
-- Si null est légitime, gérer le cas avec exception, early return ou branche métier claire.
+- Do not use `?->` as the default solution.
+- If null is impossible, fix the contract or add an explicit guard.
+- If null is legitimate, handle the case with an exception, early return, or clear business branch.
 
-### Type de retour incorrect
+### Incorrect Return Type
 
-- Ajouter le type de retour correct.
-- Si plusieurs types sont réels, utiliser une union ou extraire un objet résultat.
-- Ne pas élargir vers `mixed` pour éviter de comprendre le flux.
+- Add the correct return type.
+- If several types are real, use a union or extract a result object.
+- Do not widen to `mixed` to avoid understanding the flow.
 
-### Propriété non initialisée
+### Uninitialized Property
 
-- Initialiser dans le constructeur quand la valeur est requise.
-- Ajouter une valeur par défaut seulement si elle a un sens métier.
-- Marquer nullable uniquement si l'absence de valeur est un état valide.
+- Initialize in the constructor when the value is required.
+- Add a default value only if it has business meaning.
+- Mark nullable only if absence of value is a valid state.
 
-### Dead code
+### Dead Code
 
-Supprimer le code mort si confirmé. Vérifier qu'il n'y a pas de magie (reflection, container) avant de supprimer.
+Delete dead code if confirmed. Check that there is no magic (reflection, container) before deleting.
 
-### Generics et templates
+### Generics and Templates
 
-- Ajouter `@template`, `@extends`, `@implements` ou `@use` quand la classe est réellement générique.
-- Typer les collections Doctrine : `Collection<int, Entity>`.
-- Typer les repositories : `ServiceEntityRepository<Entity>` ou équivalent.
-- Typer les iterables : `iterable<int, Foo>` ou `Generator<int, Foo, mixed, void>`.
+- Add `@template`, `@extends`, `@implements`, or `@use` when the class is truly generic.
+- Type Doctrine collections: `Collection<int, Entity>`.
+- Type repositories: `ServiceEntityRepository<Entity>` or equivalent.
+- Type iterables: `iterable<int, Foo>` or `Generator<int, Foo, mixed, void>`.
 
-### Tableaux et shapes
+### Arrays and Shapes
 
-- Préférer un DTO quand la structure est métier ou traverse plusieurs couches.
-- Utiliser une array shape pour une structure locale et stable.
-- Vérifier `isset`, `array_key_exists` ou une validation avant accès à une clé optionnelle.
-- Utiliser `non-empty-string`, `positive-int`, `class-string<T>` seulement si le code garantit réellement cette contrainte.
+- Prefer a DTO when the structure is business-related or crosses several layers.
+- Use an array shape for a local and stable structure.
+- Check `isset`, `array_key_exists`, or validation before accessing an optional key.
+- Use `non-empty-string`, `positive-int`, `class-string<T>` only if the code really guarantees that constraint.
 
-### Callables et closures
+### Callables and Closures
 
-- Décrire les signatures avec `callable(Input): Output` ou une interface dédiée.
-- Typer les paramètres et retours des closures passées à `array_map`, `filter`, collections ou promises.
+- Describe signatures with `callable(Input): Output` or a dedicated interface.
+- Type parameters and returns of closures passed to `array_map`, `filter`, collections, or promises.
 
-## Symfony et Doctrine
+## Symfony and Doctrine
 
-- Les valeurs venant de `Request`, `InputInterface`, `ParameterBag`, env vars ou config doivent être validées ou converties.
-- Après `Repository::find()`, gérer le cas `null` avant d'utiliser l'entité.
-- Ne pas utiliser `/** @var Entity $entity */` après un `find()` nullable sans garde réelle.
-- Typer les collections, repositories, query builders et résultats de requêtes.
-- Pour les services, préférer l'interface existante quand elle représente le contrat réel.
-- Ne pas récupérer un service depuis le container pour contourner une erreur de type.
+- Values from `Request`, `InputInterface`, `ParameterBag`, env vars, or config must be validated or converted.
+- After `Repository::find()`, handle the `null` case before using the entity.
+- Do not use `/** @var Entity $entity */` after a nullable `find()` without a real guard.
+- Type collections, repositories, query builders, and query results.
+- For services, prefer the existing interface when it represents the real contract.
+- Do not fetch a service from the container to work around a type error.
 
-## PHPDoc et annotations
+## PHPDoc and Annotations
 
-PHPDoc est acceptable pour :
+PHPDoc is acceptable for:
 
 - Generics, templates, array shapes, callable signatures
-- Types Doctrine non exprimables en PHP natif
-- Précision locale après une validation runtime réelle
+- Doctrine types that cannot be expressed in native PHP
+- Local precision after real runtime validation
 
-PHPDoc ne doit pas mentir sur une valeur possible au runtime. Préférer les types natifs quand ils suffisent.
+PHPDoc must not lie about a value possible at runtime. Prefer native types when they are enough.
 
 ## Validation
 
-- Relancer PHPStan sur le fichier ou le périmètre modifié si possible.
-- Si la commande complète est trop coûteuse, lancer le plus petit périmètre utile.
-- Si PHPStan ne peut pas être lancé, expliquer pourquoi et indiquer la commande à exécuter.
-- Lancer les tests ciblés quand une correction touche le comportement, pas seulement les types.
+- Rerun PHPStan on the modified file or scope if possible.
+- If the full command is too costly, run the smallest useful scope.
+- If PHPStan cannot be run, explain why and state the command to execute.
+- Run targeted tests when a fix touches behavior, not only types.
 
-## Format de sortie
+## Output Format
 
-Résumer :
+Summarize:
 
-- Erreurs PHPStan initiales corrigées
-- Fichiers modifiés
-- Cause racine
-- Correction appliquée
-- Commandes PHPStan lancées et résultat
-- Tests lancés si pertinents
-- Risques ou erreurs restantes
+- Initial PHPStan errors fixed
+- Modified files
+- Root cause
+- Applied fix
+- PHPStan commands run and result
+- Tests run if relevant
+- Remaining risks or errors

@@ -1,158 +1,158 @@
 ---
 name: fixtures
-description: "Génère et structure des fixtures Doctrine pour projet PHP/Symfony. Produit des données réalistes, déterministes et adaptées aux tests, avec Alice, DoctrineFixturesBundle, Foundry ou le format existant, en respectant relations, contraintes, sécurité et performance."
+description: "Generates and structures Doctrine fixtures for PHP/Symfony projects. Produces realistic, deterministic data adapted to tests, with Alice, DoctrineFixturesBundle, Foundry, or the existing format, while respecting relations, constraints, security, and performance."
 ---
 
-# Génération de fixtures
+# Fixture Generation
 
-## Périmètre
+## Scope
 
-Si l'utilisateur précise une entité, un test, un scénario métier, une API, une commande ou un dossier, limiter les fixtures à ce besoin.
+If the user specifies an entity, test, business scenario, API, command, or directory, limit fixtures to that need.
 
-Sinon :
+Otherwise:
 
-- Identifier les fixtures existantes et leur format.
-- Lire les entités Doctrine concernées.
-- Lire les tests ou endpoints qui consommeront ces données si le contexte est donné.
-- Demander le scénario attendu si le besoin n'est pas clair : jeu minimal, scénario fonctionnel, validation, démo, seed local ou volumétrie.
+- Identify existing fixtures and their format.
+- Read the affected Doctrine entities.
+- Read the tests or endpoints that will consume this data if context is given.
+- Ask for the expected scenario if the need is unclear: minimal dataset, functional scenario, validation, demo, local seed, or volume.
 
-Ne pas générer des fixtures pour tout le modèle sans besoin explicite.
+Do not generate fixtures for the whole model without an explicit need.
 
-## État des lieux
+## Current State
 
-Avant de générer ou modifier des fixtures, inspecter selon le projet :
+Before generating or modifying fixtures, inspect according to the project:
 
-- `composer.json` : DoctrineFixturesBundle, Alice, HautelookAliceBundle, Foundry, Faker
-- Dossiers existants : `src/DataFixtures/`, `fixtures/`, `tests/DataFixtures/`, `tests/fixtures/`
-- Conventions de références, groupes, factories, stories ou processors
-- Entités Doctrine : champs, types, nullabilité, relations, cascades, contraintes uniques, enums
-- Contraintes Symfony Validator (`#[Assert\...]`)
-- Tests fonctionnels ou d'intégration qui chargent les fixtures
+- `composer.json`: DoctrineFixturesBundle, Alice, HautelookAliceBundle, Foundry, Faker
+- Existing directories: `src/DataFixtures/`, `fixtures/`, `tests/DataFixtures/`, `tests/fixtures/`
+- Reference, group, factory, story, or processor conventions
+- Doctrine entities: fields, types, nullability, relations, cascades, unique constraints, enums
+- Symfony Validator constraints (`#[Assert\...]`)
+- Functional or integration tests that load fixtures
 
-Ne jamais lire `.env.local`.
+Never read `.env.local`.
 
-## Processus
+## Process
 
-1. Lire l'entité cible et ses annotations/attributs Doctrine
-2. Identifier les contraintes de validation (`#[Assert\...]`)
-3. Détecter les relations (ManyToOne, OneToMany, ManyToMany)
-4. Déterminer le format utilisé dans le projet
-5. Définir le scénario couvert et les références nécessaires
-6. Générer les fixtures dans le format existant
-7. Proposer ou lancer une validation ciblée si possible
+1. Read the target entity and its Doctrine annotations/attributes.
+2. Identify validation constraints (`#[Assert\...]`).
+3. Detect relations (ManyToOne, OneToMany, ManyToMany).
+4. Determine the format used in the project.
+5. Define the covered scenario and required references.
+6. Generate fixtures in the existing format.
+7. Propose or run targeted validation if possible.
 
-## Détection du format
+## Format Detection
 
-Inspecter le projet pour identifier le système de fixtures en place :
+Inspect the project to identify the fixture system in place:
 
-- `fixtures/*.yaml` ou `*.yml` : Alice (hautelook/alice-bundle ou fidry/alice-data-fixtures)
-- `src/DataFixtures/*.php` : DoctrineFixturesBundle
-- `tests/fixtures/` ou `tests/DataFixtures/` : fixtures de test dédiées
-- `src/Factory/`, `tests/Factory/`, `Story` : Zenstruck Foundry
+- `fixtures/*.yaml` or `*.yml`: Alice (hautelook/alice-bundle or fidry/alice-data-fixtures)
+- `src/DataFixtures/*.php`: DoctrineFixturesBundle
+- `tests/fixtures/` or `tests/DataFixtures/`: dedicated test fixtures
+- `src/Factory/`, `tests/Factory/`, `Story`: Zenstruck Foundry
 
-Priorité :
+Priority:
 
-1. Utiliser le format déjà présent dans le projet.
-2. Si plusieurs formats coexistent, suivre le format des fixtures les plus proches du test ou de l'entité cible.
-3. Si aucun format n'est en place, proposer DoctrineFixturesBundle pour des fixtures PHP simples, ou Foundry si le projet utilise déjà des factories ailleurs.
-4. Ne pas installer de bundle sans demande explicite.
+1. Use the format already present in the project.
+2. If several formats coexist, follow the format of the fixtures closest to the test or target entity.
+3. If no format is in place, propose DoctrineFixturesBundle for simple PHP fixtures, or Foundry if the project already uses factories elsewhere.
+4. Do not install a bundle without an explicit request.
 
-## Types de jeux de données
+## Dataset Types
 
-### Jeu minimal
+### Minimal Dataset
 
-- Données strictement nécessaires pour un test ou un scénario.
-- Peu d'objets, références explicites et stables.
-- À privilégier pour les tests fonctionnels rapides.
+- Data strictly necessary for a test or scenario.
+- Few objects, explicit and stable references.
+- Prefer for fast functional tests.
 
-### Scénario métier
+### Business Scenario
 
-- Données cohérentes qui racontent un cas d'usage : utilisateur actif, commande payée, facture en retard, etc.
-- Nommage des références basé sur le scénario.
-- Relations complètes et lisibles.
+- Coherent data that tells a use case: active user, paid order, overdue invoice, etc.
+- Reference naming based on the scenario.
+- Complete and readable relations.
 
-### Fixtures de validation
+### Validation Fixtures
 
-- Données invalides uniquement dans un fichier, groupe ou provider séparé.
-- Ne pas mélanger fixtures invalides avec le jeu de données chargé par défaut.
-- Documenter l'erreur attendue si la fixture sert à tester une contrainte.
+- Invalid data only in a separate file, group, or provider.
+- Do not mix invalid fixtures with the default loaded dataset.
+- Document the expected error if the fixture is used to test a constraint.
 
-### Fixtures de volume
+### Volume Fixtures
 
-- Générer seulement sur demande explicite.
-- Séparer des fixtures par défaut.
-- Prévoir batch, flush périodique et désactivation éventuelle du SQL logger si le projet le fait.
-- Ne pas charger 10k objets dans les tests fonctionnels standards.
+- Generate only on explicit request.
+- Separate from default fixtures.
+- Plan batch, periodic flush, and possible SQL logger disabling if the project does so.
+- Do not load 10k objects in standard functional tests.
 
-## Règles
+## Rules
 
-### Données réalistes
+### Realistic Data
 
-- Noms et prénoms français (pas de "John Doe")
-- Emails valides et cohérents avec les noms
-- Dates dans des plages réalistes (pas de dates en l'an 3000)
-- Numéros de téléphone au format français
-- Adresses françaises
-- SIRET, TVA intracommunautaire si pertinent
-- Données métier plausibles : statuts, montants, devises, périodes, slugs, références internes
-- Pas de données personnelles réelles, secrets, tokens, mots de passe réels ou clés API
+- French first and last names (no "John Doe").
+- Valid emails consistent with names.
+- Dates in realistic ranges (no dates in year 3000).
+- Phone numbers in French format.
+- French addresses.
+- SIRET, intra-community VAT if relevant.
+- Plausible business data: statuses, amounts, currencies, periods, slugs, internal references.
+- No real personal data, secrets, tokens, real passwords, or API keys.
 
-### Déterminisme
+### Determinism
 
-- Les tests doivent rester reproductibles.
-- Préférer des valeurs explicites pour les scénarios critiques.
-- Si Faker est utilisé, fixer une seed quand le framework le permet.
-- Éviter les dates relatives non contrôlées (`now`, `+3 days`) dans les assertions sensibles.
-- Utiliser une horloge contrôlée ou des dates fixes quand le comportement dépend du temps.
-- Générer des emails, slugs et références uniques de manière prévisible.
+- Tests must remain reproducible.
+- Prefer explicit values for critical scenarios.
+- If Faker is used, set a seed when the framework allows it.
+- Avoid uncontrolled relative dates (`now`, `+3 days`) in sensitive assertions.
+- Use a controlled clock or fixed dates when behavior depends on time.
+- Generate emails, slugs, and references uniquely and predictably.
 
-### Couverture
+### Coverage
 
-- Minimum 5 entrées par entité
-- Varier les cas : valeurs normales, valeurs aux limites, cas spéciaux
-- Inclure au moins un cas avec des champs optionnels à null
-- Inclure au moins un cas avec des valeurs longues (proches des limites VARCHAR)
-- Ne pas surproduire des données si le test n'en a besoin que d'une ou deux.
-- Couvrir les statuts ou transitions importantes du domaine si le scénario les utilise.
+- Minimum 5 entries per entity.
+- Vary cases: normal values, boundary values, special cases.
+- Include at least one case with optional fields set to null.
+- Include at least one case with long values (near VARCHAR limits).
+- Do not overproduce data if the test needs only one or two records.
+- Cover important statuses or domain transitions if the scenario uses them.
 
 ### Relations
 
-- Créer les entités référencées en premier
-- Utiliser des références nommées de manière explicite
-- Couvrir les cas : relation présente, relation nulle (si nullable), relation multiple
-- Pour DoctrineFixturesBundle, utiliser `DependentFixtureInterface` si une fixture dépend de références créées ailleurs.
-- Pour Alice, utiliser les références `@reference_name` et des noms lisibles.
-- Pour ManyToOne obligatoire, créer la cible avant la source.
-- Pour OneToMany bidirectionnel, vérifier que la méthode d'ajout maintient les deux côtés de la relation.
-- Pour ManyToMany, créer au moins un cas vide si autorisé et un cas avec plusieurs relations.
-- Ne pas compter sur une cascade persist absente : persister explicitement les entités nécessaires.
+- Create referenced entities first.
+- Use explicitly named references.
+- Cover cases: relation present, null relation (if nullable), multiple relations.
+- For DoctrineFixturesBundle, use `DependentFixtureInterface` if a fixture depends on references created elsewhere.
+- For Alice, use `@reference_name` references and readable names.
+- For a required ManyToOne, create the target before the source.
+- For bidirectional OneToMany, check that the add method maintains both sides of the relation.
+- For ManyToMany, create at least one empty case if allowed and one case with several relations.
+- Do not rely on a missing cascade persist: explicitly persist required entities.
 
-### Contraintes de validation
+### Validation Constraints
 
-- Chaque fixture doit respecter les contraintes `#[Assert\...]` de l'entité
-- Respecter les contraintes DB : `NOT NULL`, unique, longueur, enum, clé étrangère
-- Créer des fixtures invalides uniquement dans un groupe, fichier ou test séparé
-- Pour les contraintes uniques, générer des valeurs explicitement distinctes
-- Pour les mots de passe, utiliser le hasher du projet ou un hash de test connu, jamais un mot de passe réel
-- Pour les fichiers, utiliser des fichiers de test dédiés et non des chemins absolus locaux
+- Each fixture must respect the entity's `#[Assert\...]` constraints.
+- Respect DB constraints: `NOT NULL`, unique, length, enum, foreign key.
+- Create invalid fixtures only in a separate group, file, or test.
+- For unique constraints, generate explicitly distinct values.
+- For passwords, use the project hasher or a known test hash, never a real password.
+- For files, use dedicated test files and not local absolute paths.
 
-### Sécurité et environnements
+### Security and Environments
 
-- Ne jamais cibler ou documenter un chargement en production.
-- Ne pas lire `.env.local`.
-- Ne pas inclure de secrets, tokens, cookies, credentials ou données personnelles réelles.
-- Ne pas charger des fixtures destructives sans confirmation explicite.
-- Pour un chargement local ou test, préciser l'environnement attendu (`--env=test` si pertinent).
+- Never target or document loading fixtures in production.
+- Do not read `.env.local`.
+- Do not include secrets, tokens, cookies, credentials, or real personal data.
+- Do not load destructive fixtures without explicit confirmation.
+- For local or test loading, specify the expected environment (`--env=test` if relevant).
 
 ### Performance
 
-- Éviter un `flush()` après chaque entité sauf besoin explicite.
-- Utiliser un flush final pour les petits jeux de données.
-- Pour un volume important, flush et clear par batch.
-- Éviter les appels réseau, I/O externes ou services lents dans les fixtures.
-- Garder les fixtures par défaut rapides à charger.
+- Avoid a `flush()` after each entity unless explicitly needed.
+- Use a final flush for small datasets.
+- For significant volume, flush and clear by batch.
+- Avoid network calls, external I/O, or slow services in fixtures.
+- Keep default fixtures fast to load.
 
-## Format Alice (YAML)
+## Alice Format (YAML)
 
 ```yaml
 App\Entity\User:
@@ -168,14 +168,14 @@ App\Entity\User:
         roles: ['ROLE_USER']
 ```
 
-Règles Alice :
+Alice rules:
 
-- Utiliser des références explicites pour les entités importantes.
-- Garder les expressions Faker lisibles et compatibles avec la version utilisée.
-- Éviter l'aléatoire non borné pour les champs validés ou uniques.
-- Séparer les fichiers par domaine ou scénario si le projet le fait déjà.
+- Use explicit references for important entities.
+- Keep Faker expressions readable and compatible with the version used.
+- Avoid unbounded randomness for validated or unique fields.
+- Split files by domain or scenario if the project already does so.
 
-## Format DoctrineFixturesBundle (PHP)
+## DoctrineFixturesBundle Format (PHP)
 
 ```php
 public function load(ObjectManager $manager): void
@@ -191,46 +191,46 @@ public function load(ObjectManager $manager): void
 }
 ```
 
-Règles DoctrineFixturesBundle :
+DoctrineFixturesBundle rules:
 
-- Implémenter `DependentFixtureInterface` pour les dépendances entre fixtures.
-- Utiliser `addReference()` et `getReference()` avec des noms stables.
-- Utiliser le password hasher si des utilisateurs authentifiables sont créés.
-- Éviter d'appeler des services métier complexes depuis les fixtures sauf convention projet claire.
-- Pour des fixtures groupées, respecter `FixtureGroupInterface` si le projet l'utilise.
+- Implement `DependentFixtureInterface` for dependencies between fixtures.
+- Use `addReference()` and `getReference()` with stable names.
+- Use the password hasher if authenticatable users are created.
+- Avoid calling complex business services from fixtures unless the project convention is clear.
+- For grouped fixtures, respect `FixtureGroupInterface` if the project uses it.
 
-## Format Foundry
+## Foundry Format
 
-Si Foundry est déjà présent :
+If Foundry is already present:
 
-- Utiliser les factories existantes.
-- Créer ou modifier une `Story` pour les scénarios réutilisables.
-- Garder les states lisibles : `UserFactory::new()->admin()`, `OrderFactory::new()->paid()`.
-- Préférer les overrides explicites pour les assertions importantes.
-- Ne pas introduire Foundry dans un projet qui ne l'utilise pas sans demande explicite.
+- Use existing factories.
+- Create or modify a `Story` for reusable scenarios.
+- Keep states readable: `UserFactory::new()->admin()`, `OrderFactory::new()->paid()`.
+- Prefer explicit overrides for important assertions.
+- Do not introduce Foundry into a project that does not use it without an explicit request.
 
-## Commandes utiles
+## Useful Commands
 
-Adapter les commandes au projet :
+Adapt commands to the project:
 
 - `bin/console doctrine:fixtures:load --env=test`
-- `bin/console doctrine:fixtures:load --group=nom --env=test`
+- `bin/console doctrine:fixtures:load --group=name --env=test`
 - `bin/console doctrine:schema:validate`
-- `vendor/bin/phpunit --filter NomDuTest`
-- Commandes Hautelook Alice ou Foundry si elles existent dans le projet
+- `vendor/bin/phpunit --filter TestName`
+- Hautelook Alice or Foundry commands if they exist in the project
 
-Ne pas lancer de commande destructive sans confirmation explicite, notamment un chargement de fixtures qui purge la base.
+Do not run a destructive command without explicit confirmation, especially fixture loading that purges the database.
 
-## Format de sortie
+## Output Format
 
-Pour une génération ou modification, fournir :
+For generation or modification, provide:
 
-- Fichiers créés ou modifiés
-- Format retenu et raison
-- Scénarios ou entités couverts
-- Références créées et relations importantes
-- Contraintes de validation ou DB prises en compte
-- Commandes de validation lancées ou non lancées
-- Limites ou hypothèses restantes
+- Files created or modified
+- Chosen format and reason
+- Covered scenarios or entities
+- Created references and important relations
+- Validation or DB constraints considered
+- Validation commands run or not run
+- Remaining limitations or assumptions
 
-Générer le fichier de fixtures complet, prêt à utiliser, avec les imports, références, dépendances et groupes nécessaires pour les relations.
+Generate the complete fixture file, ready to use, with imports, references, dependencies, and groups needed for relations.

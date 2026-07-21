@@ -1,25 +1,25 @@
 ---
 name: onboard
-description: "Génère un guide d'onboarding technique pour un projet PHP/Symfony. Analyse le repo pour documenter stack, installation locale, architecture, workflows, commandes, conventions, CI/CD et points d'attention vérifiables pour un nouveau développeur."
+description: "Generates a technical onboarding guide for a PHP/Symfony project. Analyzes the repo to document stack, local installation, architecture, workflows, commands, conventions, CI/CD, and verifiable points of attention for a new developer."
 ---
 
-# Onboarding technique
+# Technical Onboarding
 
-## Périmètre
+## Scope
 
-Par défaut, produire un guide pour le projet entier.
+By default, produce a guide for the whole project.
 
-Si l'utilisateur précise un module, dossier ou objectif, limiter l'onboarding à ce périmètre.
+If the user specifies a module, directory, or objective, limit onboarding to that scope.
 
-Ne pas modifier le repository, sauf demande explicite.
+Do not modify the repository unless explicitly requested.
 
-## Sources à inspecter
+## Sources to Inspect
 
-Lire selon leur présence :
+Read when present:
 
 - `README*`, `docs/`
 - `composer.json`, `composer.lock`, `symfony.lock`
-- `Makefile`, `Taskfile*`, scripts Composer
+- `Makefile`, `Taskfile*`, Composer scripts
 - `Dockerfile`, `docker-compose*.yml`
 - `.env`, `.env.dist`, `.env.example`
 - `config/bundles.php`, `config/packages/`, `config/routes/`
@@ -27,73 +27,73 @@ Lire selon leur présence :
 - `assets/`, `package.json`, `yarn.lock`, `pnpm-lock.yaml`, `package-lock.json`
 - `.github/workflows/`, `.gitlab-ci.yml`
 
-Ne jamais lire ni afficher `.env.local`.
+Never read or display `.env.local`.
 
-## Règles
+## Rules
 
-- Ne documenter que ce qui est vérifiable dans le repo.
-- Distinguer les faits vérifiés des points à confirmer.
-- Citer les fichiers sources consultés quand cela aide à comprendre.
-- Ne pas inventer de commandes : préférer Makefile, scripts Composer, Docker Compose ou scripts npm réellement présents.
-- Si README, Docker, Composer ou CI se contredisent, signaler l'écart.
-- Ne jamais afficher de secret. Pour les variables d'environnement, documenter seulement le nom et le rôle si vérifiable.
-- Si un secret semble committé, le signaler sans le recopier.
+- Document only what is verifiable in the repo.
+- Distinguish verified facts from points to confirm.
+- Cite consulted source files when it helps understanding.
+- Do not invent commands: prefer Makefile, Composer scripts, Docker Compose, or npm scripts actually present.
+- If README, Docker, Composer, or CI contradict each other, report the discrepancy.
+- Never display a secret. For environment variables, document only the name and role if verifiable.
+- If a secret appears committed, report it without copying it.
 
-## Sections du guide
+## Guide Sections
 
-### Vue d'ensemble
+### Overview
 
-Objectif du projet, type d'application, composants principaux et services externes identifiables.
+Project objective, application type, main components, and identifiable external services.
 
-### Stack technique
+### Technical Stack
 
-Version PHP, Symfony, base de données, outils (Redis, RabbitMQ, etc.), bundles principaux.
+PHP version, Symfony, database, tools (Redis, RabbitMQ, etc.), main bundles.
 
-### Installation locale
+### Local Installation
 
-Prérequis, installation des dépendances, configuration d'environnement, démarrage applicatif, Docker si présent.
+Prerequisites, dependency installation, environment configuration, application startup, Docker if present.
 
 ### Configuration
 
-Variables d'environnement documentées, fichiers de configuration importants, bundles activés, routes principales.
+Documented environment variables, important configuration files, enabled bundles, main routes.
 
-### Base de données
+### Database
 
-Type de base, migrations, fixtures, commandes de création/reset si vérifiables.
+Database type, migrations, fixtures, creation/reset commands if verifiable.
 
 ### Architecture
 
-Structure des dossiers `src/`, pattern architectural (MVC, hexagonal, DDD, CQRS), couches et responsabilités, conventions de nommage.
+`src/` directory structure, architectural pattern (MVC, hexagonal, DDD, CQRS), layers and responsibilities, naming conventions.
 
-### Workflows de développement
+### Development Workflows
 
-Commandes de dev, cache, assets, workers, Messenger, cron ou tâches planifiées si présents.
+Dev commands, cache, assets, workers, Messenger, cron or scheduled tasks if present.
 
-### Tests et qualité
+### Tests and Quality
 
 Tests, linter, PHPStan, CS-Fixer, migrations, cache, assets, Makefile.
 
-### Conventions de code
+### Code Conventions
 
-Standard de codage (PSR-12, custom), organisation des tests, git workflow, CI/CD.
+Coding standard (PSR-12, custom), test organization, git workflow, CI/CD.
 
 ### CI/CD
 
-Pipelines, jobs, versions PHP, étapes de test, build, déploiement si vérifiables.
+Pipelines, jobs, PHP versions, test, build, deployment steps if verifiable.
 
-### Points d'attention
+### Points of Attention
 
-Zones de dette technique prouvées par TODO/FIXME, documentation contradictoire, fichiers sensibles, particularités du projet, dépendances obsolètes si vérifiables.
+Technical debt areas proven by TODO/FIXME, contradictory documentation, sensitive files, project specifics, obsolete dependencies if verifiable.
 
-## Format de sortie
+## Output Format
 
-Produire un document Markdown factuel et concis.
+Produce a factual and concise Markdown document.
 
-Inclure :
+Include:
 
-- Commandes utiles en blocs `sh`
-- Références aux fichiers consultés quand pertinent
-- Section "À confirmer" pour les informations non vérifiables
-- Section "Écarts ou manques de documentation" si nécessaire
+- Useful commands in `sh` blocks
+- References to consulted files when relevant
+- "To Confirm" section for non-verifiable information
+- "Documentation Gaps or Discrepancies" section if needed
 
-Ne pas inclure de secrets ni de contenu `.env.local`.
+Do not include secrets or `.env.local` content.

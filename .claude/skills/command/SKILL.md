@@ -1,83 +1,93 @@
 ---
 name: command
-description: "Génère une commande console Symfony. Produit une commande avec arguments, options, validation des inputs, progress bar, output structuré et gestion d'erreur."
+description: "Generates a Symfony console command. Produces a command with arguments, options, input validation, progress bar, structured output, and error handling."
 ---
 
-# Génération de commande Symfony Console
+# Symfony Console Command Generation
 
 ## Structure
 
-### Attribut PHP 8+
+### PHP 8+ Attribute
+
 ```php
 #[AsCommand(
     name: 'app:import-csv',
-    description: 'Description courte',
+    description: 'Short description',
     aliases: ['a:ic'],
 )]
 ```
 
-### Nommage
-- Préfixe `app:`, format `app:action-name`.
-- Utiliser le kebab-case pour les segments composés (`import-users`, `sync-products`, `delete-expired-sessions`).
-- Garder les segments courts, explicites et en anglais.
+### Naming
+
+- Prefix `app:`, format `app:action-name`.
+- Use kebab-case for compound segments (`import-users`, `sync-products`, `delete-expired-sessions`).
+- Keep segments short, explicit, and in English.
 
 ### Description
-- Utiliser une phrase courte et claire en anglais qui décrit l'action.
+
+- Use a short and clear English sentence that describes the action.
 
 ### Alias
-- Ajouter un alias court au format `a:abc`.
-- `abc` correspond aux premières lettres significatives du nom de l'action.
-- Exemple : `app:import-csv` -> alias `a:ic`.
-- Exemple : `app:sync-prices` -> alias `a:sp`.
-- Ne pas créer d'alias ambigu si plusieurs commandes auraient le même alias.
 
-## Règles
+- Add a short alias in the `a:abc` format.
+- `abc` matches the first meaningful letters of the action name.
+- Example: `app:import-csv` -> alias `a:ic`.
+- Example: `app:sync-prices` -> alias `a:sp`.
+- Do not create an ambiguous alias if several commands would have the same alias.
+
+## Rules
 
 ### Architecture
-- La commande est un adaptateur mince : parse les inputs, appelle un service, affiche le résultat
-- Pas de logique métier dans la commande
-- Injecter les dépendances par constructeur
+
+- The command is a thin adapter: parse inputs, call a service, display the result.
+- No business logic in the command.
+- Inject dependencies through the constructor.
 
 ### Input
-- Définir les arguments et options dans `configure()` avec des noms explicites
-- Typer et valider chaque valeur récupérée depuis `InputInterface`
-- Utiliser `InputArgument::REQUIRED` uniquement pour les valeurs indispensables
-- Utiliser des options pour les comportements (`--dry-run`, `--force`, `--limit`, `--batch-size`, `--env`)
-- Fournir une valeur par défaut sûre pour les options numériques
-- Refuser les valeurs invalides avec un message clair et `Command::INVALID`
-- Demander confirmation avec `$io->confirm()` avant une action destructive, sauf si `--force` est fourni
-- Ne jamais lire directement `$_SERVER`, `$_ENV`, `$_GET`, `$_POST` dans la commande
 
-### Questions interactives
-- Utiliser les helpers de `SymfonyStyle` (`ask()`, `choice()`, `confirm()`) pour les questions simples
-- Utiliser `QuestionHelper` et les classes `Question`, `ChoiceQuestion`, `ConfirmationQuestion` pour les cas avancés
-- Ne poser une question que si la valeur n'est pas fournie par argument ou option
-- Prévoir un mode non interactif : si `--no-interaction` est actif, utiliser les valeurs par défaut ou retourner `Command::INVALID`
-- Toujours fournir une valeur par défaut explicite quand la commande peut continuer sans réponse
-- Valider la réponse avec un validator de question ou une méthode dédiée
-- Masquer les secrets avec `Question::setHidden(true)` et ne jamais les afficher dans l'output
-- Pour les choix, utiliser `ChoiceQuestion` avec une liste fermée et refuser les réponses hors liste
-- Pour les actions destructives, demander confirmation avec `confirm()` ou `ConfirmationQuestion`, sauf si `--force` est fourni
+- Define arguments and options in `configure()` with explicit names.
+- Type and validate each value retrieved from `InputInterface`.
+- Use `InputArgument::REQUIRED` only for indispensable values.
+- Use options for behaviors (`--dry-run`, `--force`, `--limit`, `--batch-size`, `--env`).
+- Provide a safe default value for numeric options.
+- Reject invalid values with a clear message and `Command::INVALID`.
+- Ask for confirmation with `$io->confirm()` before a destructive action, unless `--force` is provided.
+- Never read `$_SERVER`, `$_ENV`, `$_GET`, or `$_POST` directly in the command.
+
+### Interactive Questions
+
+- Use `SymfonyStyle` helpers (`ask()`, `choice()`, `confirm()`) for simple questions.
+- Use `QuestionHelper` and the `Question`, `ChoiceQuestion`, `ConfirmationQuestion` classes for advanced cases.
+- Ask a question only if the value is not provided by an argument or option.
+- Plan for non-interactive mode: if `--no-interaction` is active, use default values or return `Command::INVALID`.
+- Always provide an explicit default value when the command can continue without an answer.
+- Validate the answer with a question validator or a dedicated method.
+- Hide secrets with `Question::setHidden(true)` and never display them in output.
+- For choices, use `ChoiceQuestion` with a closed list and reject answers outside the list.
+- For destructive actions, ask for confirmation with `confirm()` or `ConfirmationQuestion`, unless `--force` is provided.
 
 ### Output
-- Utiliser `SymfonyStyle`
+
+- Use `SymfonyStyle`.
 - `$io->title()`, `$io->table()`, `$io->progressBar()`
-- `$io->success()` / `$io->error()` pour le résultat final
-- Adapter le détail avec les niveaux de verbosité (`-v`, `-vv`, `-vvv`)
-- Afficher un résumé final : nombre d'éléments traités, ignorés, échoués
-- Utiliser `$io->warning()` pour les cas non bloquants et `$io->note()` pour les informations utiles
-- Pour les erreurs, afficher un message actionnable sans exposer de secret ni de donnée sensible
-- Retourner le bon code : `Command::SUCCESS`, `Command::FAILURE` ou `Command::INVALID`
-- Ne pas écrire directement avec `echo`, `var_dump()` ou `print_r()`
-- Garder l'output stable et lisible pour une exécution en CI ou dans un cron
+- `$io->success()` / `$io->error()` for the final result
+- Adapt detail with verbosity levels (`-v`, `-vv`, `-vvv`)
+- Display a final summary: number of processed, skipped, failed items
+- Use `$io->warning()` for non-blocking cases and `$io->note()` for useful information
+- For errors, display an actionable message without exposing secrets or sensitive data
+- Return the right code: `Command::SUCCESS`, `Command::FAILURE`, or `Command::INVALID`
+- Do not write directly with `echo`, `var_dump()`, or `print_r()`
+- Keep output stable and readable for execution in CI or cron
 
 ### Dry-run
-- Supporter `--dry-run` quand la commande modifie des données
-- Afficher ce qui serait fait sans persister
 
-### Traitement par batch
-Flush et clear Doctrine tous les 100 items dans les boucles.
+- Support `--dry-run` when the command modifies data.
+- Display what would be done without persisting.
 
-## Format de sortie
+### Batch Processing
 
-Classe de commande complète avec imports, attribut, configuration, et méthode execute.
+Flush and clear Doctrine every 100 items in loops.
+
+## Output Format
+
+Complete command class with imports, attribute, configuration, and execute method.

@@ -1,180 +1,180 @@
 # CLAUDE.md
 
-Instructions projet pour Claude Code.
+Project instructions for Claude Code.
 
-Ce fichier doit rester court, concret et maintenu avec le projet. Il complète les skills spécialisés disponibles dans `.claude/skills/`.
+This file must stay short, concrete, and maintained with the project. It complements the specialized skills available in `.claude/skills/`.
 
-## Contexte Projet
+## Project Context
 
-- Nom du projet : `<nom-du-projet>`
-- Domaine métier : `<description courte>`
-- Type d'application : `<monolithe Symfony, API, back-office, worker, bundle, librairie>`
-- Environnement principal : `<Docker, local PHP, VM, CI uniquement>`
-- Niveau de criticité : `<faible, moyen, élevé>`
+- Project name: `<project-name>`
+- Business domain: `<short description>`
+- Application type: `<Symfony monolith, API, back office, worker, bundle, library>`
+- Main environment: `<Docker, local PHP, VM, CI only>`
+- Criticality level: `<low, medium, high>`
 
-## Stack Technique
+## Technical Stack
 
-- PHP : `<7.0, 7.4, 8.1, 8.2, 8.3, ...>`
-- Symfony : `<3.4, 4.4, 5.4, 6.4, 7.x, ...>`
-- Base de données : `<MySQL, MariaDB, PostgreSQL, SQLite>`
-- ORM : `<Doctrine ORM, Doctrine DBAL, autre>`
-- Frontend : `<Twig, Webpack Encore, Vite, React, Vue, aucun>`
-- Queue / async : `<Symfony Messenger, RabbitMQ, Redis, SQS, aucun>`
-- Observabilité : `<Monolog, Sentry, Blackfire, Datadog, New Relic, Grafana, aucun>`
+- PHP: `<7.0, 7.4, 8.1, 8.2, 8.3, ...>`
+- Symfony: `<3.4, 4.4, 5.4, 6.4, 7.x, ...>`
+- Database: `<MySQL, MariaDB, PostgreSQL, SQLite>`
+- ORM: `<Doctrine ORM, Doctrine DBAL, other>`
+- Frontend: `<Twig, Webpack Encore, Vite, React, Vue, none>`
+- Queue / async: `<Symfony Messenger, RabbitMQ, Redis, SQS, none>`
+- Observability: `<Monolog, Sentry, Blackfire, Datadog, New Relic, Grafana, none>`
 
-## Règles Générales
+## General Rules
 
-- Répondre en français technique, concis et actionnable.
-- Préférer les conventions existantes du projet aux choix génériques.
-- Lire le code avant de proposer une modification.
-- Ne pas supposer une version récente de PHP ou Symfony sans preuve dans le projet.
-- Respecter la compatibilité legacy quand le projet cible PHP 7.x ou une version Symfony LTS ancienne.
-- Avant une modification importante, lister les fichiers et changements prévus puis attendre validation si la demande l'indique.
-- Ne pas faire de refactor opportuniste sans lien direct avec la demande.
+- Answer in concise, actionable technical English.
+- Prefer the project's existing conventions over generic choices.
+- Read the code before proposing a modification.
+- Do not assume a recent PHP or Symfony version without proof in the project.
+- Respect legacy compatibility when the project targets PHP 7.x or an old Symfony LTS version.
+- Before a significant modification, list the planned files and changes, then wait for validation if the request says so.
+- Do not do opportunistic refactoring unrelated to the request.
 
-## Sécurité Et Données Sensibles
+## Security and Sensitive Data
 
-- Ne jamais lire, afficher ou committer `.env.local`.
-- Ne jamais exposer secrets, tokens, mots de passe, cookies, clés API, DSN ou données personnelles sensibles.
-- Ne jamais ajouter de credentials de test réalistes dans le code, les fixtures ou la documentation.
-- Demander confirmation avant toute commande destructive : suppression de données, migration irréversible, reset Git, drop database, purge de cache partagé.
+- Never read, display, or commit `.env.local`.
+- Never expose secrets, tokens, passwords, cookies, API keys, DSNs, or sensitive personal data.
+- Never add realistic test credentials in code, fixtures, or documentation.
+- Ask for confirmation before any destructive command: data deletion, irreversible migration, Git reset, database drop, shared cache purge.
 
-## Workflow De Modification
+## Modification Workflow
 
-Avant de modifier :
+Before modifying:
 
-1. Identifier le besoin exact.
-2. Lire les fichiers concernés.
-3. Vérifier les conventions locales.
-4. Proposer un plan court si la modification touche plusieurs fichiers.
+1. Identify the exact need.
+2. Read the affected files.
+3. Check local conventions.
+4. Propose a short plan if the change touches several files.
 
-Pendant la modification :
+During the modification:
 
-- Garder le diff minimal.
-- Ajouter ou adapter les tests quand le comportement change.
-- Conserver les noms, patterns et abstractions déjà présents.
-- Éviter les changements de style non demandés.
+- Keep the diff minimal.
+- Add or adapt tests when behavior changes.
+- Preserve existing names, patterns, and abstractions.
+- Avoid unrequested style changes.
 
-Après la modification :
+After the modification:
 
-- Résumer les fichiers modifiés.
-- Indiquer les commandes lancées.
-- Signaler clairement les tests non lancés ou impossibles à lancer.
-- Mentionner les risques résiduels si nécessaire.
+- Summarize the modified files.
+- State the commands run.
+- Clearly report tests not run or impossible to run.
+- Mention residual risks if needed.
 
-## Commandes Projet
+## Project Commands
 
-Adapter cette section au projet.
+Adapt this section to the project.
 
 ```bash
-# Installer les dépendances
+# Install dependencies
 composer install
 
-# Lancer les tests
+# Run tests
 vendor/bin/phpunit
 
-# Analyse statique
+# Static analysis
 vendor/bin/phpstan analyse
 
-# Qualité de code
+# Code quality
 vendor/bin/php-cs-fixer fix --dry-run --diff
 
-# Migrations Doctrine
+# Doctrine migrations
 bin/console doctrine:migrations:status
 bin/console doctrine:migrations:migrate --dry-run
 ```
 
-## Skills Disponibles
+## Available Skills
 
-Utiliser le skill adapté quand la demande correspond :
+Use the appropriate skill when the request matches:
 
-- `/review` pour une revue de code.
-- `/debug` pour diagnostiquer une erreur ou une stacktrace.
-- `/plan` pour préparer une implémentation avant code.
-- `/test` pour créer ou corriger des tests.
-- `/phpstan` pour corriger l'analyse statique.
-- `/security` pour un audit sécurité.
-- `/performance` pour une lenteur ou un problème de charge.
-- `/doctrine` pour les entités, repositories, relations, transactions et requêtes.
-- `/migration` pour les migrations Doctrine.
-- `/fixtures` pour les jeux de données de test.
-- `/dto` pour les DTOs et mappings.
-- `/crud` pour générer ou modifier un CRUD.
-- `/messenger` pour Symfony Messenger.
-- `/twig` pour les templates Twig.
-- `/docker` pour l'environnement local.
-- `/observability` pour logs, traces, métriques et alerting.
+- `/review` for a code review.
+- `/debug` to diagnose an error or stacktrace.
+- `/plan` to prepare an implementation before code.
+- `/test` to create or fix tests.
+- `/phpstan` to fix static analysis.
+- `/security` for a security audit.
+- `/performance` for slowness or load issues.
+- `/doctrine` for entities, repositories, relations, transactions, and queries.
+- `/migration` for Doctrine migrations.
+- `/fixtures` for test datasets.
+- `/dto` for DTOs and mappings.
+- `/crud` to generate or modify a CRUD.
+- `/messenger` for Symfony Messenger.
+- `/twig` for Twig templates.
+- `/docker` for the local environment.
+- `/observability` for logs, traces, metrics, and alerting.
 
-## Conventions PHP / Symfony
+## PHP / Symfony Conventions
 
-- Types stricts : `<oui/non/selon fichier existant>`
-- Style de typage : `<PHPDoc, types natifs, mixte>`
-- Injection de dépendances : préférer l'injection constructeur sauf convention contraire.
-- Contrôleurs : garder fins, déléguer la logique métier aux services.
-- Doctrine : éviter les requêtes implicites en boucle et documenter les choix transactionnels.
-- DTO : ne pas exposer directement les entités si le projet utilise déjà des DTOs.
-- Exceptions : utiliser les exceptions métier existantes quand elles existent.
+- Strict types: `<yes/no/by existing file>`
+- Typing style: `<PHPDoc, native types, mixed>`
+- Dependency injection: prefer constructor injection unless the project convention differs.
+- Controllers: keep them thin, delegate business logic to services.
+- Doctrine: avoid implicit queries inside loops and document transactional choices.
+- DTO: do not expose entities directly if the project already uses DTOs.
+- Exceptions: use existing business exceptions when they exist.
 
 ## Tests
 
-- Framework : `<PHPUnit, Pest, Behat, Panther, autre>`
-- Emplacement : `<tests/, tests/Unit, tests/Functional, ...>`
-- Fixtures de test : `<DoctrineFixturesBundle, Alice, Foundry, factories custom>`
-- Base de test : `<SQLite, PostgreSQL, MySQL, containers>`
+- Framework: `<PHPUnit, Pest, Behat, Panther, other>`
+- Location: `<tests/, tests/Unit, tests/Functional, ...>`
+- Test fixtures: `<DoctrineFixturesBundle, Alice, Foundry, custom factories>`
+- Test database: `<SQLite, PostgreSQL, MySQL, containers>`
 
-Quand un bug est corrigé, ajouter un test de régression si le projet le permet.
+When a bug is fixed, add a regression test if the project allows it.
 
 ## Git
 
-- Ne pas modifier les fichiers sans rapport avec la demande.
-- Ne pas revert des changements utilisateur sans demande explicite.
-- Ne pas inclure les fichiers IDE, caches, logs ou artefacts locaux.
-- Les commits doivent être scopés et décrire le changement réel.
+- Do not modify files unrelated to the request.
+- Do not revert user changes without an explicit request.
+- Do not include IDE files, caches, logs, or local artifacts.
+- Commits must be scoped and describe the real change.
 
 ### Branches
 
-- `main` représente le code en production.
-- `develop` représente le code déployé sur l'environnement de développement.
-- Ne pas pousser directement sur `main` ou `develop`.
-- Passer par une pull request pour intégrer une branche dans `develop`.
-- Passer par une pull request de `develop` vers `main` pour préparer une mise en production.
-- Créer les branches de travail depuis `develop`, sauf `hotfix` qui part de `main`.
+- `main` represents production code.
+- `develop` represents code deployed to the development environment.
+- Do not push directly to `main` or `develop`.
+- Use a pull request to integrate a branch into `develop`.
+- Use a pull request from `develop` to `main` to prepare a production release.
+- Create working branches from `develop`, except `hotfix` branches, which start from `main`.
 
-Format recommandé :
+Recommended format:
 
 ```text
-<type>/<id_demande>_<nom-court-en-kebab-case>
+<type>/<request_id>_<short-name-in-kebab-case>
 ```
 
-Types usuels :
+Common types:
 
-- `feature` ou `feat` : nouvelle fonctionnalité.
-- `bugfix` ou `fix` : correction d'un bug présent sur `develop`.
-- `hotfix` : correction urgente d'un bug présent sur `main`.
-- `chore` : nettoyage, maintenance, tâches techniques sans changement fonctionnel.
-- `update` : mise à jour de dépendance, configuration ou code existant.
+- `feature` or `feat`: new feature.
+- `bugfix` or `fix`: bug fix for a bug present on `develop`.
+- `hotfix`: urgent bug fix for a bug present on `main`.
+- `chore`: cleanup, maintenance, technical tasks without functional change.
+- `update`: dependency, configuration, or existing code update.
 
-Exemples :
+Examples:
 
 ```text
-feature/US-123_export-factures
-fix/TICKET-456_total-commande
-hotfix/TICKET-789_erreur-paiement
-chore/nettoyage-services-obsoletes
+feature/US-123_invoice-export
+fix/TICKET-456_order-total
+hotfix/TICKET-789_payment-error
+chore/cleanup-obsolete-services
 ```
 
 ### Commits
 
-- Utiliser la convention Conventional Commits.
-- Utiliser la référence du ticket ou de l'User Story comme scope.
-- Si aucun ticket n'existe, utiliser un scope court décrivant le périmètre technique.
-- Format minimal :
+- Use the Conventional Commits convention.
+- Use the ticket or User Story reference as the scope.
+- If no ticket exists, use a short scope describing the technical area.
+- Minimal format:
 
 ```text
-<type>(<ticket-ou-scope>): <description courte>
+<type>(<ticket-or-scope>): <short description>
 ```
 
-Exemples :
+Examples:
 
 ```text
 feat(US-123): add invoice export
@@ -184,46 +184,46 @@ test(TICKET-789): add regression test
 docs(readme): document local setup
 ```
 
-Types fréquents :
+Frequent types:
 
-- `feat` : fonctionnalité.
-- `fix` : correction de bug.
-- `docs` : documentation.
-- `style` : formatage sans changement logique.
-- `refactor` : refactoring sans changement fonctionnel.
-- `perf` : amélioration de performance.
-- `test` : ajout ou correction de tests.
-- `build` : build, dépendances, packaging.
-- `ci` : intégration continue.
-- `chore` : maintenance.
-- `revert` : annulation d'un commit.
+- `feat`: feature.
+- `fix`: bug fix.
+- `docs`: documentation.
+- `style`: formatting without logical change.
+- `refactor`: refactoring without functional change.
+- `perf`: performance improvement.
+- `test`: add or fix tests.
+- `build`: build, dependencies, packaging.
+- `ci`: continuous integration.
+- `chore`: maintenance.
+- `revert`: revert a commit.
 
 ### Pull Requests
 
-- Une pull request doit avoir un périmètre clair et limité.
-- La personne qui crée la pull request reste responsable du merge.
-- En équipe, demander une review à au moins une autre personne.
-- Ne pas merger une pull request marquée WIP ou dépendante d'une sous-branche non mergée.
-- Mentionner dans la PR les commandes de vérification lancées et les risques connus.
+- A pull request must have a clear and limited scope.
+- The person who creates the pull request remains responsible for the merge.
+- In a team, request a review from at least one other person.
+- Do not merge a pull request marked WIP or depending on an unmerged sub-branch.
+- Mention in the PR the verification commands run and known risks.
 
-### Tags Et Déploiements
+### Tags and Deployments
 
-- Les tags de déploiement sont créés automatiquement par la CI/CD.
-- Ne pas créer ou pousser de tag manuellement sans demande explicite.
-- Un merge sur `develop` peut déclencher un déploiement en développement.
-- Un merge sur `main` peut déclencher un déploiement en production.
+- Deployment tags are created automatically by CI/CD.
+- Do not create or push a tag manually without an explicit request.
+- A merge into `develop` may trigger deployment to development.
+- A merge into `main` may trigger deployment to production.
 
-### Garde-Fous Pour Claude
+### Guardrails for Claude
 
-- Avant un commit, vérifier le diff staged et non staged.
-- Ne jamais committer `.env.local`, fichiers IDE, caches, logs, dumps ou artefacts générés.
-- Ne pas utiliser `git reset --hard`, `git checkout --`, `git clean` ou une commande destructive sans confirmation explicite.
-- Ne pas réécrire l'historique partagé sans confirmation explicite.
-- Si des changements non liés sont présents, les laisser hors du commit.
+- Before a commit, check the staged and unstaged diff.
+- Never commit `.env.local`, IDE files, caches, logs, dumps, or generated artifacts.
+- Do not use `git reset --hard`, `git checkout --`, `git clean`, or a destructive command without explicit confirmation.
+- Do not rewrite shared history without explicit confirmation.
+- If unrelated changes are present, leave them out of the commit.
 
-## Notes Projet
+## Project Notes
 
-Ajouter ici les décisions locales importantes :
+Add important local decisions here:
 
 - `<decision 1>`
 - `<decision 2>`

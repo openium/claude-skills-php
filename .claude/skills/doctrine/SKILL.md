@@ -1,146 +1,146 @@
 ---
 name: doctrine
-description: "Audite et corrige l'usage Doctrine ORM/DBAL dans un projet PHP/Symfony. Analyse entités, mappings, relations, repositories, QueryBuilder, transactions, UnitOfWork, cascades, index, performances et cohérence avec migrations sans se limiter aux migrations."
+description: "Audits and fixes Doctrine ORM/DBAL usage in a PHP/Symfony project. Analyzes entities, mappings, relations, repositories, QueryBuilder, transactions, UnitOfWork, cascades, indexes, performance, and consistency with migrations without being limited to migrations."
 ---
 
-# Audit Doctrine ORM/DBAL
+# Doctrine ORM/DBAL Audit
 
-## Périmètre
+## Scope
 
-Déterminer si l'utilisateur demande :
+Determine whether the user is asking for:
 
-- Audit d'une entité, relation, repository, requête ou service Doctrine.
-- Correction d'une erreur Doctrine : mapping, query, transaction, flush, cascade, proxy.
-- Conception d'un mapping ou d'une relation.
-- Optimisation d'une requête ou d'un chargement.
-- Analyse d'un diff qui touche Doctrine.
+- An audit of a Doctrine entity, relation, repository, query, or service.
+- A fix for a Doctrine error: mapping, query, transaction, flush, cascade, proxy.
+- Design of a mapping or relation.
+- Optimization of a query or loading strategy.
+- Analysis of a diff that touches Doctrine.
 
-Si aucun périmètre n'est donné :
+If no scope is given:
 
-- Lire `git status`.
-- Analyser les fichiers Doctrine modifiés : entités, repositories, migrations, services qui utilisent l'EntityManager.
-- À défaut, demander le périmètre.
+- Read `git status`.
+- Analyze modified Doctrine files: entities, repositories, migrations, services that use the EntityManager.
+- Otherwise, ask for the scope.
 
-Ne pas modifier une migration déjà exécutée sans validation explicite.
+Do not modify an already executed migration without explicit validation.
 
-## État des lieux
+## Current State
 
-Inspecter selon le sujet :
+Inspect according to the topic:
 
-- `composer.json` : Doctrine ORM, DBAL, migrations, extensions, version Symfony
-- `config/packages/doctrine.yaml`, mappings, types custom, naming strategy
-- Entités, repositories, services, handlers, controllers ou normalizers concernés
-- Migrations récentes si le schéma change
-- Tests et fixtures qui couvrent le comportement
-- Version PHP/Symfony pour attributs, annotations, enums ou readonly
+- `composer.json`: Doctrine ORM, DBAL, migrations, extensions, Symfony version
+- `config/packages/doctrine.yaml`, mappings, custom types, naming strategy
+- Affected entities, repositories, services, handlers, controllers, or normalizers
+- Recent migrations if the schema changes
+- Tests and fixtures that cover the behavior
+- PHP/Symfony version for attributes, annotations, enums, or readonly
 
-Ne jamais lire `.env.local`.
+Never read `.env.local`.
 
-## Sévérités
+## Severities
 
-- **Bloquant** : mapping invalide, perte de données, relation incohérente, transaction absente sur écritures critiques, cascade dangereuse, requête incorrecte, N+1 massif.
-- **Important** : index manquant, hydratation excessive, flush en boucle, repository qui porte de la logique métier, migration absente, nullabilité incohérente.
-- **Suggestion** : nommage, typage PHPDoc/generics, extraction de requête, simplification ou alignement conventionnel.
+- **Blocking**: invalid mapping, data loss, inconsistent relation, missing transaction on critical writes, dangerous cascade, incorrect query, massive N+1.
+- **Important**: missing index, excessive hydration, flush in a loop, repository carrying business logic, missing migration, inconsistent nullability.
+- **Suggestion**: naming, PHPDoc/generics typing, query extraction, simplification, or convention alignment.
 
-## Mapping et entités
+## Mapping and Entities
 
-- Vérifier cohérence entre propriétés PHP, mapping Doctrine, contraintes DB et validation Symfony.
-- Respecter la convention du projet : attributs, annotations, XML ou YAML.
-- Pour PHP 7.x, ne pas introduire attributs, enums ou readonly.
-- Initialiser les collections dans le constructeur.
-- Préférer `DateTimeImmutable` si le projet l'utilise déjà.
-- Vérifier types `decimal`, `json`, `datetime`, `uuid`, enums et value objects.
-- Ne pas exposer des setters aveugles si l'entité porte des invariants métier.
-- Éviter la logique applicative, appels réseau ou accès service dans une entité.
+- Check consistency between PHP properties, Doctrine mapping, DB constraints, and Symfony validation.
+- Respect the project convention: attributes, annotations, XML, or YAML.
+- For PHP 7.x, do not introduce attributes, enums, or readonly.
+- Initialize collections in the constructor.
+- Prefer `DateTimeImmutable` if the project already uses it.
+- Check `decimal`, `json`, `datetime`, `uuid`, enum, and value object types.
+- Do not expose blind setters if the entity carries business invariants.
+- Avoid application logic, network calls, or service access inside an entity.
 
 ## Relations
 
-- Vérifier owning side / inverse side.
-- Maintenir les deux côtés d'une relation bidirectionnelle dans les méthodes `add/remove`.
-- Définir `nullable`, `onDelete`, cascade et `orphanRemoval` explicitement selon le métier.
-- Ne pas utiliser `cascade={"remove"}` ou `orphanRemoval=true` sans comprendre l'impact données.
-- Ajouter un index sur les colonnes FK utilisées en recherche, jointure ou tri.
-- Pour ManyToMany, vérifier table de jointure, contraintes uniques et cas de suppression.
-- Pour relations volumineuses, éviter de charger toute la collection pour compter, filtrer ou paginer.
+- Check owning side / inverse side.
+- Maintain both sides of a bidirectional relation in `add/remove` methods.
+- Define `nullable`, `onDelete`, cascade, and `orphanRemoval` explicitly according to the business rules.
+- Do not use `cascade={"remove"}` or `orphanRemoval=true` without understanding the data impact.
+- Add an index on FK columns used for search, join, or sorting.
+- For ManyToMany, check join table, unique constraints, and deletion cases.
+- For large relations, avoid loading the whole collection to count, filter, or paginate.
 
-## Repositories et requêtes
+## Repositories and Queries
 
-- Les repositories contiennent des requêtes, pas la logique métier.
-- Binder tous les paramètres DQL/SQL.
-- Éviter les concaténations DQL/SQL avec données utilisateur.
-- Retourner un type clair : entité, liste typée, scalar result, DTO projection ou paginator.
-- Gérer explicitement `null` après `find()` / `findOneBy()`.
-- Éviter `findAll()` sur tables volumineuses.
-- Utiliser pagination pour les listes.
-- Vérifier les N+1 et lazy loads déclenchés par Twig, Serializer ou normalizers.
-- Pour lecture pure, envisager scalar results, DTO projection ou query dédiée.
+- Repositories contain queries, not business logic.
+- Bind all DQL/SQL parameters.
+- Avoid DQL/SQL concatenation with user data.
+- Return a clear type: entity, typed list, scalar result, DTO projection, or paginator.
+- Explicitly handle `null` after `find()` / `findOneBy()`.
+- Avoid `findAll()` on large tables.
+- Use pagination for lists.
+- Check N+1 and lazy loads triggered by Twig, Serializer, or normalizers.
+- For pure reads, consider scalar results, DTO projection, or a dedicated query.
 
-## Transactions et écritures
+## Transactions and Writes
 
-- Utiliser une transaction explicite pour plusieurs écritures cohérentes.
-- Ne pas faire `flush()` dans une boucle sauf besoin prouvé.
-- Pour batch, utiliser chunks, `flush()` et `clear()` périodiques.
-- Ne pas mélanger transaction longue et appels HTTP/I/O externes.
-- Vérifier idempotence si l'écriture est appelée depuis Messenger ou un retry.
-- Ne pas avaler une exception Doctrine qui laisse l'EntityManager fermé.
+- Use an explicit transaction for several consistent writes.
+- Do not call `flush()` inside a loop unless the need is proven.
+- For batches, use chunks and periodic `flush()` and `clear()`.
+- Do not mix a long transaction with external HTTP/I/O calls.
+- Check idempotency if the write is called from Messenger or a retry.
+- Do not swallow a Doctrine exception that leaves the EntityManager closed.
 
-## Migrations et schéma
+## Migrations and Schema
 
-- Toute modification d'entité persistée doit avoir une migration correspondante.
-- Vérifier nullabilité, valeurs par défaut, contraintes uniques, index et clés étrangères.
-- Éviter les migrations destructives sans stratégie de données.
-- Ne pas supposer que la table est vide.
-- Pour tables volumineuses, signaler les risques de lock et recommander une stratégie zero-downtime si nécessaire.
+- Every persisted entity modification must have a corresponding migration.
+- Check nullability, default values, unique constraints, indexes, and foreign keys.
+- Avoid destructive migrations without a data strategy.
+- Do not assume the table is empty.
+- For large tables, report lock risks and recommend a zero-downtime strategy if needed.
 
 ## Performance
 
-- Identifier N+1, hydratation excessive, jointures multiples de collections, pagination absente.
-- Vérifier index pour `WHERE`, `JOIN`, `ORDER BY`, contraintes uniques.
-- Proposer `EXPLAIN` / `EXPLAIN ANALYZE` si accès DB disponible.
-- Ne pas optimiser sans preuve ou hypothèse explicite.
-- Ne pas cacher une requête lente sans stratégie d'invalidation.
+- Identify N+1, excessive hydration, multiple collection joins, missing pagination.
+- Check indexes for `WHERE`, `JOIN`, `ORDER BY`, unique constraints.
+- Propose `EXPLAIN` / `EXPLAIN ANALYZE` if DB access is available.
+- Do not optimize without proof or an explicit hypothesis.
+- Do not hide a slow query behind a cache without an invalidation strategy.
 
-## Tests et validation
+## Tests and Validation
 
-Prévoir selon le risque :
+Plan according to risk:
 
-- Test unitaire d'invariant d'entité ou value object.
-- Test d'intégration repository avec vraie base.
-- Test fonctionnel si Twig/API/Serializer déclenche le chargement.
-- Test de transaction ou idempotence pour écriture critique.
-- Fixtures minimales cohérentes avec les contraintes.
+- Unit test for an entity or value object invariant.
+- Repository integration test with a real database.
+- Functional test if Twig/API/Serializer triggers loading.
+- Transaction or idempotency test for critical writes.
+- Minimal fixtures consistent with constraints.
 
-Commandes utiles :
+Useful commands:
 
 - `bin/console doctrine:schema:validate`
 - `bin/console doctrine:migrations:diff`
 - `bin/console doctrine:migrations:migrate --dry-run`
-- `vendor/bin/phpunit --filter NomDuTest`
-- PHPStan si typage repositories/entities présent
+- `vendor/bin/phpunit --filter TestName`
+- PHPStan if repository/entity typing is present
 
-Ne pas lancer de migration réelle, purge ou commande destructive sans confirmation explicite.
+Do not run a real migration, purge, or destructive command without explicit confirmation.
 
-## Ne pas faire
+## Do Not
 
-- Ne pas injecter l'EntityManager partout si un repository ou service applicatif suffit.
-- Ne pas hydrater directement une entité depuis une requête externe sensible.
-- Ne pas ignorer les problèmes de nullabilité entre PHP, DB et validation.
-- Ne pas supprimer cascade, FK ou contrainte unique sans vérifier l'impact données.
-- Ne pas mettre de logique métier lourde dans repository ou controller.
-- Ne pas modifier `.env.local`.
+- Do not inject the EntityManager everywhere if a repository or application service is enough.
+- Do not directly hydrate an entity from a sensitive external request.
+- Do not ignore nullability issues between PHP, DB, and validation.
+- Do not remove cascade, FK, or unique constraints without checking the data impact.
+- Do not put heavy business logic in a repository or controller.
+- Do not modify `.env.local`.
 
-## Format de sortie
+## Output Format
 
-Présenter les findings triés par sévérité décroissante.
+Present findings sorted by decreasing severity.
 
-Pour chaque finding :
+For each finding:
 
-- Fichier et ligne
-- Sévérité : bloquant, important ou suggestion
-- Catégorie : mapping, relation, repository, transaction, migration, performance, sécurité
-- Preuve vérifiée
-- Impact concret
-- Correction proposée
-- Test ou commande de validation conseillé
+- File and line
+- Severity: blocking, important, or suggestion
+- Category: mapping, relation, repository, transaction, migration, performance, security
+- Verified evidence
+- Concrete impact
+- Proposed fix
+- Recommended validation test or command
 
-Si aucun problème n'est trouvé, mentionner les limites : DB non accessible, migrations non lancées, profiler absent, tests non exécutés.
+If no issue is found, mention the limitations: DB not accessible, migrations not run, profiler absent, tests not executed.

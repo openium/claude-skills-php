@@ -1,125 +1,126 @@
 ---
 name: security
-description: "Audit de sécurité rapide pour projet PHP/Symfony. Analyse les fichiers modifiés ou un périmètre donné. Détecte injections SQL, XSS, CSRF, exposition de données, permissions manquantes. Basé sur OWASP Top 10. Utiliser avant un commit ou pour auditer un périmètre."
+description: "Fast security audit for PHP/Symfony projects. Analyzes modified files or a given scope. Detects SQL injections, XSS, CSRF, data exposure, and missing permissions. Based on the OWASP Top 10. Use before a commit or to audit a scope."
 ---
 
-# Audit de sécurité PHP/Symfony
+# PHP/Symfony Security Audit
 
-## Périmètre
+## Scope
 
-Par défaut, analyse les fichiers modifiés (`git diff`). Si l'utilisateur précise un fichier, un dossier ou un périmètre, analyser celui-ci.
+By default, analyze modified files (`git diff`). If the user specifies a file, directory, or scope, analyze that scope.
 
-## Contexte Symfony à vérifier
+## Symfony Context to Check
 
-Avant l'audit, inspecter selon le périmètre :
+Before the audit, inspect according to the scope:
 
-- `config/packages/security.yaml` : firewalls, access control, password hashers, remember me
-- `config/packages/framework.yaml` : CSRF, session, trusted proxies, trusted hosts
-- `config/packages/nelmio_cors.yaml` si présent : configuration CORS
-- Contrôleurs API, voters, authenticators, services applicatifs et serializers
-- Templates Twig utilisés pour les emails
-- `composer.json` et `composer.lock`
-- `.env` et `.env.dist` si présents
+- `config/packages/security.yaml`: firewalls, access control, password hashers, remember me
+- `config/packages/framework.yaml`: CSRF, session, trusted proxies, trusted hosts
+- `config/packages/nelmio_cors.yaml` if present: CORS configuration
+- API controllers, voters, authenticators, application services, and serializers
+- Twig templates used for emails
+- `composer.json` and `composer.lock`
+- `.env` and `.env.dist` if present
 
-Ne jamais lire ni afficher le contenu de `.env.local`.
+Never read or display the contents of `.env.local`.
 
-## Critères d'analyse (OWASP Top 10)
+## Analysis Criteria (OWASP Top 10)
 
-### A01 - Broken Access Control (bloquant)
+### A01 - Broken Access Control (blocking)
 
-- Route sensible sans contrôle d'accès visible via `#[IsGranted]`, `denyAccessUnlessGranted()`, `access_control`, voter ou service applicatif
-- Route sensible accessible sans authentification
-- Vérification d'accès basée sur l'ID utilisateur passé en paramètre (IDOR)
-- Voter absent pour les opérations sur des entités avec propriétaire
-- `security.yaml` : firewall avec `security: false` en production
-- Accès direct à une entité sans vérifier que l'utilisateur courant y a droit
+- Sensitive route without visible access control through `#[IsGranted]`, `denyAccessUnlessGranted()`, `access_control`, voter, or application service
+- Sensitive route accessible without authentication
+- Access check based on the user ID passed as a parameter (IDOR)
+- Missing voter for operations on owner-based entities
+- `security.yaml`: firewall with `security: false` in production
+- Direct access to an entity without checking that the current user is entitled to it
 
-### A02 - Cryptographic Failures (bloquant)
+### A02 - Cryptographic Failures (blocking)
 
-- Mot de passe stocké en clair ou hashé avec MD5/SHA1
-- Token/secret en dur dans le code source
-- Fichier `.env` avec des secrets committé
-- Clé de chiffrement faible ou prévisible
-- Communication HTTP au lieu de HTTPS pour des données sensibles
+- Password stored in clear text or hashed with MD5/SHA1
+- Token/secret hardcoded in source code
+- `.env` file with committed secrets
+- Weak or predictable encryption key
+- HTTP communication instead of HTTPS for sensitive data
 
-### A03 - Injection (bloquant)
+### A03 - Injection (blocking)
 
-- Requête DQL/SQL construite par concaténation de variables
-- `$connection->executeQuery("SELECT ... WHERE id = $id")` sans binding
-- Commande shell construite avec des données utilisateur sans `escapeshellarg()`
-- Expression régulière construite avec des données utilisateur
-- Requête LDAP sans échappement
+- DQL/SQL query built by concatenating variables
+- `$connection->executeQuery("SELECT ... WHERE id = $id")` without binding
+- Shell command built with user data without `escapeshellarg()`
+- Regular expression built with user data
+- LDAP query without escaping
 
 ### A04 - Insecure Design (important)
 
-- Absence de rate limiting sur login, reset password, API publique
-- Pas de validation côté serveur (uniquement côté client)
-- Logique d'autorisation dans le template Twig au lieu du contrôleur/voter
-- Endpoint qui retourne plus de données que nécessaire (sur-exposition)
-- DTO d'input absent sur un endpoint sensible qui accepte des données utilisateur
-- Serializer configuré avec des groupes trop larges ou absents
-- Désérialisation qui hydrate directement une entité Doctrine exposée côté API
-- Réponse API qui expose des champs sensibles via le serializer
+- Missing rate limiting on login, password reset, public API
+- No server-side validation (client-side only)
+- Authorization logic in the Twig template instead of the controller/voter
+- Endpoint returning more data than necessary (overexposure)
+- Missing input DTO on a sensitive endpoint that accepts user data
+- Serializer configured with groups that are too broad or missing
+- Deserialization that directly hydrates a Doctrine entity exposed through the API
+- API response exposing sensitive fields through the serializer
 
 ### A05 - Security Misconfiguration (important)
 
-- `APP_DEBUG=true` en production
-- `kernel.debug` activé en prod
-- Profiler Symfony accessible en production
-- CORS trop permissif (`allow_origin: '*'`)
-- Headers de sécurité manquants (CSP, X-Frame-Options, HSTS)
+- `APP_DEBUG=true` in production
+- `kernel.debug` enabled in prod
+- Symfony profiler accessible in production
+- Overly permissive CORS (`allow_origin: '*'`)
+- Missing security headers (CSP, X-Frame-Options, HSTS)
 
-### A07 - XSS (bloquant)
+### A07 - XSS (blocking)
 
-- `|raw` sur des données utilisateur dans Twig
-- `{{ variable|raw }}` sans sanitization préalable
-- Injection dans des attributs HTML (`href="{{ user_input }}"`)
-- Données utilisateur dans du JavaScript inline
-- Templates d'email qui injectent des données utilisateur sans échappement ou sanitization
+- `|raw` on user data in Twig
+- `{{ variable|raw }}` without prior sanitization
+- Injection into HTML attributes (`href="{{ user_input }}"`)
+- User data inside inline JavaScript
+- Email templates that inject user data without escaping or sanitization
 
-### A08 - Insecure Deserialization (bloquant)
+### A08 - Insecure Deserialization (blocking)
 
-- `unserialize()` sur des données utilisateur
-- Désérialisation JSON sans validation de schéma avant traitement
-- `Serializer::deserialize()` sans groupes de dénormalisation
+- `unserialize()` on user data
+- JSON deserialization without schema validation before processing
+- `Serializer::deserialize()` without denormalization groups
 
-### Uploads de fichiers (bloquant)
+### File Uploads (blocking)
 
-- Upload sans validation du type MIME réel
-- Extension de fichier utilisée comme seule preuve du type
-- Nom de fichier utilisateur conservé tel quel
-- Fichier uploadé dans un dossier public exécutable
-- Absence de limite de taille côté serveur
+- Upload without validating the real MIME type
+- File extension used as the only proof of type
+- User-provided filename kept as-is
+- File uploaded into an executable public directory
+- Missing server-side size limit
 
-### Logs et erreurs (important)
+### Logs and Errors (important)
 
-- Logs contenant tokens, mots de passe, Authorization header ou données personnelles sensibles
-- Message d'erreur API qui expose une stacktrace, une requête SQL ou une information interne
-- Exception métier retournée telle quelle au client
-- Données sensibles affichées dans les logs Messenger ou les logs HTTP client
+- Logs containing tokens, passwords, Authorization header, or sensitive personal data
+- API error message exposing a stacktrace, SQL query, or internal information
+- Business exception returned as-is to the client
+- Sensitive data displayed in Messenger logs or HTTP client logs
 
-### Dépendances (important)
+### Dependencies (important)
 
-- Vulnérabilités détectées par `composer audit`
-- Package abandonné ou non maintenu utilisé sur un chemin critique
-- Contraintes Composer trop larges sur une dépendance sensible
-- `composer.lock` absent du repository
+- Vulnerabilities detected by `composer audit`
+- Abandoned or unmaintained package used on a critical path
+- Composer constraints too broad on a sensitive dependency
+- `composer.lock` missing from the repository
 
-### Fichiers sensibles
+### Sensitive Files
 
-- `.env` ou `.env.dist` avec des secrets dans le git
-- `composer.lock` absent du repository (versions non verrouillées)
-- Fichiers de configuration avec des credentials
+- `.env` or `.env.dist` with secrets in git
+- `composer.lock` missing from the repository (unlocked versions)
+- Configuration files with credentials
 
-## Format de sortie
+## Output Format
 
-Pour chaque vulnérabilité :
-- Fichier et ligne
-- Catégorie OWASP
-- Sévérité (bloquant / important / suggestion)
-- Preuve vérifiée dans le code ou la configuration
-- Scénario d'exploitation réaliste
-- Code vulnérable
-- Code corrigé
-- Test ou vérification de non-régression conseillé
-- Référence (lien doc Symfony Security si applicable)
+For each vulnerability:
+
+- File and line
+- OWASP category
+- Severity (blocking / important / suggestion)
+- Evidence verified in the code or configuration
+- Realistic exploitation scenario
+- Vulnerable code
+- Fixed code
+- Recommended regression test or verification
+- Reference (Symfony Security documentation link if applicable)

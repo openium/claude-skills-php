@@ -1,113 +1,113 @@
 ---
 name: dto
-description: "Génère et structure des DTOs pour projet PHP/Symfony. Produit des DTOs readonly typés, validés, compatibles Serializer/API Platform/Messenger, avec mapping explicite depuis les entités et application vers les entités via service, handler ou factory."
+description: "Generates and structures DTOs for PHP/Symfony projects. Produces typed, validated, readonly DTOs compatible with Serializer/API Platform/Messenger, with explicit mapping from entities and application to entities through a service, handler, or factory."
 ---
 
-# Génération de DTOs
+# DTO Generation
 
-## Périmètre
+## Scope
 
-Si l'utilisateur précise une entité, un endpoint, un formulaire, une commande, un message Messenger, un use case ou un fichier, limiter le travail à ce périmètre.
+If the user specifies an entity, endpoint, form, command, Messenger message, use case, or file, limit the work to that scope.
 
-Sinon :
+Otherwise:
 
-- Identifier les DTOs existants et leurs conventions.
-- Lire l'entité, le contrôleur, le handler, le form type ou le serializer concerné.
-- Vérifier l'architecture du projet : MVC classique, API Platform, hexagonale, CQRS, Messenger.
-- Demander le cas d'usage si le sens du DTO n'est pas clair : input, output, update, query, command ou message.
+- Identify existing DTOs and their conventions.
+- Read the affected entity, controller, handler, form type, or serializer.
+- Check the project architecture: classic MVC, API Platform, hexagonal, CQRS, Messenger.
+- Ask for the use case if the DTO intent is unclear: input, output, update, query, command, or message.
 
-Ne pas générer un DTO générique qui expose toute l'entité sans besoin identifié.
+Do not generate a generic DTO that exposes the whole entity without an identified need.
 
-## État des lieux
+## Current State
 
-Avant de générer ou modifier des DTOs, inspecter selon le projet :
+Before generating or modifying DTOs, inspect according to the project:
 
-- `composer.json` : version PHP, Symfony Validator, Serializer, API Platform, Messenger
-- DTOs existants : namespace, suffixe, readonly, validation, mapping
-- Entités Doctrine liées : champs, nullabilité, relations, enums, value objects
-- Contrôleurs, handlers, processors, providers, forms ou commands qui consomment les DTOs
-- Règles de validation existantes et groupes de validation
-- Configuration serializer si utile : groupes, name converter, normalizers custom
+- `composer.json`: PHP version, Symfony Validator, Serializer, API Platform, Messenger
+- Existing DTOs: namespace, suffix, readonly, validation, mapping
+- Related Doctrine entities: fields, nullability, relations, enums, value objects
+- Controllers, handlers, processors, providers, forms, or commands that consume DTOs
+- Existing validation rules and validation groups
+- Serializer configuration if useful: groups, name converter, custom normalizers
 
-Ne pas lire `.env.local`.
+Do not read `.env.local`.
 
-## Types de DTO
+## DTO Types
 
-### Input DTO (création/modification)
+### Input DTO (creation/modification)
 
-- Classes `readonly`, promotion de propriétés dans le constructeur
-- Contraintes de validation (`#[Assert\...]`)
-- Ne contient que les champs modifiables par le client
-- Porte des scalaires, enums, value objects simples ou identifiants de relation, pas des entités Doctrine
-- Peut être spécialisé par opération : `CreateUserDto`, `UpdateUserDto`, `ChangeUserEmailDto`
-- Pour un update partiel, distinguer champ absent, champ présent à `null` et champ présent avec valeur si l'API le permet
+- `readonly` classes, constructor property promotion
+- Validation constraints (`#[Assert\...]`)
+- Contains only fields modifiable by the client
+- Carries scalars, enums, simple value objects, or relation identifiers, not Doctrine entities
+- Can be specialized by operation: `CreateUserDto`, `UpdateUserDto`, `ChangeUserEmailDto`
+- For partial updates, distinguish absent field, field present as `null`, and field present with value if the API allows it
 
-### Output DTO (lecture)
+### Output DTO (read)
 
-- Pas de contraintes de validation
-- Peut contenir des champs calculés ou formatés
-- Méthode statique `fromEntity()` pour le mapping
-- Expose le contrat public attendu, pas forcément toute l'entité
-- Peut agréger plusieurs entités ou valeurs calculées si le use case l'exige
-- Ne doit pas déclencher de requêtes cachées non maîtrisées via des relations lazy
+- No validation constraints
+- Can contain computed or formatted fields
+- Static `fromEntity()` method for mapping
+- Exposes the expected public contract, not necessarily the whole entity
+- Can aggregate several entities or computed values if the use case requires it
+- Must not trigger uncontrolled hidden queries through lazy relations
 
 ### Command/Query DTO (CQRS)
 
-- Command : intention de modification
-- Query : demande de données
-- Immutables (readonly)
-- Ne contient que les données nécessaires au use case
-- Peut être indépendant du transport HTTP, CLI ou Messenger
+- Command: modification intent
+- Query: data request
+- Immutable (readonly)
+- Contains only the data needed by the use case
+- Can be independent from HTTP, CLI, or Messenger transport
 
 ### Filter/Search DTO
 
-- Représente des critères de recherche, tri, pagination et filtres.
-- Valide les bornes : page positive, limite maximale, tri autorisé, enum de statut.
-- Utilise des valeurs nullable seulement si l'absence de critère est un état valide.
+- Represents search, sorting, pagination, and filter criteria.
+- Validates bounds: positive page, maximum limit, allowed sort, status enum.
+- Uses nullable values only if absence of criterion is a valid state.
 
 ### Message DTO (Messenger)
 
-- Message immutable et sérialisable.
-- Contient des identifiants stables plutôt que des entités Doctrine.
-- Ne contient pas de service, ressource, closure, objet non sérialisable ou données sensibles inutiles.
-- Reste compatible entre deux déploiements successifs si des messages peuvent rester en file.
+- Immutable and serializable message.
+- Contains stable identifiers rather than Doctrine entities.
+- Contains no service, resource, closure, non-serializable object, or unnecessary sensitive data.
+- Remains compatible between two successive deployments if messages can remain queued.
 
 ### Form DTO
 
-- Peut découpler un formulaire Symfony de l'entité Doctrine.
-- Porte les contraintes de validation proches de l'input utilisateur.
-- Le mapping vers l'entité doit rester dans le contrôleur, un form handler ou un service applicatif.
+- Can decouple a Symfony form from the Doctrine entity.
+- Carries validation constraints close to user input.
+- Mapping to the entity must stay in the controller, a form handler, or an application service.
 
-## Règles
+## Rules
 
-- Classes `readonly` (PHP 8.2+)
-- Pas de logique métier dans le DTO
-- Pas de dépendance vers Doctrine ou Symfony (sauf Assert)
-- Nommage : `Create{Entity}Dto`, `Update{Entity}Dto`, `{Entity}Dto`
-- Propriétés typées précisément : éviter `mixed`, `array` ou `object` si une forme précise existe
-- Préférer les types natifs, enums et value objects simples aux chaînes magiques
-- Utiliser PHPDoc seulement pour les generics, array shapes ou types non exprimables en PHP natif
-- Ne pas rendre nullable uniquement pour faciliter le mapping
-- Ne pas exposer un champ sensible par défaut : mot de passe hashé, token, secret, donnée personnelle non nécessaire
-- Ne pas réutiliser le même DTO pour create, update et output si les contrats divergent
+- `readonly` classes (PHP 8.2+)
+- No business logic in the DTO
+- No dependency on Doctrine or Symfony (except Assert)
+- Naming: `Create{Entity}Dto`, `Update{Entity}Dto`, `{Entity}Dto`
+- Precisely typed properties: avoid `mixed`, `array`, or `object` if a precise shape exists
+- Prefer native types, enums, and simple value objects over magic strings
+- Use PHPDoc only for generics, array shapes, or types not expressible in native PHP
+- Do not make nullable only to simplify mapping
+- Do not expose a sensitive field by default: hashed password, token, secret, unnecessary personal data
+- Do not reuse the same DTO for create, update, and output if contracts diverge
 
 ## Validation
 
-- Mettre les contraintes Symfony Validator sur les input DTOs.
-- Ne pas mettre de validation utilisateur sur les output DTOs.
-- Utiliser `#[Assert\NotBlank]` pour une chaîne obligatoire non vide, `#[Assert\NotNull]` pour une valeur obligatoire pouvant être `0` ou `false`.
-- Ajouter `#[Assert\Email]`, `#[Assert\Length]`, `#[Assert\Choice]`, `#[Assert\Regex]`, `#[Assert\Uuid]`, `#[Assert\Positive]` selon le contrat réel.
-- Pour les collections, utiliser `#[Assert\All]`, `#[Assert\Count]`, et documenter le type : `@param list<string> $tags`.
-- Pour les objets imbriqués, utiliser `#[Assert\Valid]`.
-- Pour les dates, préciser le type attendu (`DateTimeImmutable`, chaîne ISO 8601, date seule) et convertir à la frontière applicative.
-- Pour les fichiers uploadés, utiliser `UploadedFile` seulement côté input/form et valider taille, MIME réel et extension si nécessaire.
-- Utiliser les groupes de validation seulement si le projet les utilise déjà ou si le cas create/update le justifie clairement.
+- Put Symfony Validator constraints on input DTOs.
+- Do not put user validation on output DTOs.
+- Use `#[Assert\NotBlank]` for a required non-empty string, `#[Assert\NotNull]` for a required value that may be `0` or `false`.
+- Add `#[Assert\Email]`, `#[Assert\Length]`, `#[Assert\Choice]`, `#[Assert\Regex]`, `#[Assert\Uuid]`, `#[Assert\Positive]` according to the real contract.
+- For collections, use `#[Assert\All]`, `#[Assert\Count]`, and document the type: `@param list<string> $tags`.
+- For nested objects, use `#[Assert\Valid]`.
+- For dates, specify the expected type (`DateTimeImmutable`, ISO 8601 string, date only) and convert at the application boundary.
+- For uploaded files, use `UploadedFile` only on the input/form side and validate size, real MIME type, and extension if needed.
+- Use validation groups only if the project already uses them or if the create/update case clearly justifies them.
 
 ## Mapping
 
-### Entité vers Output DTO
+### Entity to Output DTO
 
-Une méthode statique `fromEntity()` sur l'output DTO est acceptable pour un mapping simple :
+A static `fromEntity()` method on the output DTO is acceptable for simple mapping:
 
 ```php
 public static function fromEntity(User $user): self
@@ -120,26 +120,26 @@ public static function fromEntity(User $user): self
 }
 ```
 
-Règles :
+Rules:
 
-- Le DTO peut connaître l'entité qu'il expose.
-- Le mapping doit rester simple : lecture de champs, transformation légère, format public.
-- Ne pas mettre de requêtes, repository, EntityManager ou règles métier dans `fromEntity()`.
-- Pour une liste, prévoir une factory explicite ou une méthode dédiée si le projet le fait déjà.
-- Pour éviter les N+1, vérifier que les relations utilisées par le DTO sont chargées par la requête.
+- The DTO may know the entity it exposes.
+- Mapping must stay simple: field reads, light transformation, public format.
+- Do not put queries, repository, EntityManager, or business rules in `fromEntity()`.
+- For a list, plan an explicit factory or dedicated method if the project already does so.
+- To avoid N+1, check that relations used by the DTO are loaded by the query.
 
-### Input DTO vers entité
+### Input DTO to Entity
 
-Éviter `toEntity()` ou `applyToEntity()` dans l'input DTO.
+Avoid `toEntity()` or `applyToEntity()` in the input DTO.
 
-Préférer :
+Prefer:
 
-- une factory pour créer une entité ;
-- un handler applicatif pour appliquer une commande ;
-- une méthode métier de l'entité appelée par le service ;
-- un processor API Platform si le projet l'utilise.
+- a factory to create an entity;
+- an application handler to apply a command;
+- a business method of the entity called by the service;
+- an API Platform processor if the project uses it.
 
-Exemple :
+Example:
 
 ```php
 final class UpdateUserHandler
@@ -152,50 +152,50 @@ final class UpdateUserHandler
 }
 ```
 
-Règles :
+Rules:
 
-- Le DTO ne doit pas dépendre de Doctrine, d'un repository ou du container.
-- Les relations entrantes doivent être représentées par des IDs ou des codes métier.
-- Le handler résout les entités liées, vérifie les droits et applique les invariants métier.
-- Ne pas hydrater directement une entité Doctrine depuis une requête externe.
-- Ne pas bypasser les méthodes métier de l'entité avec des setters aveugles si le domaine expose des méthodes explicites.
+- The DTO must not depend on Doctrine, a repository, or the container.
+- Incoming relations must be represented by IDs or business codes.
+- The handler resolves related entities, checks permissions, and applies business invariants.
+- Do not directly hydrate a Doctrine entity from an external request.
+- Do not bypass business methods of the entity with blind setters if the domain exposes explicit methods.
 
-## Serializer et API
+## Serializer and API
 
-- Séparer le contrat public du modèle Doctrine.
-- Utiliser les groupes serializer seulement s'ils sont déjà la convention du projet.
-- Ne pas dépendre uniquement des groupes serializer pour protéger des champs sensibles : définir un output DTO explicite si l'API est sensible.
-- Garder les noms de champs stables pour les clients API.
-- Prévoir un DTO d'erreur ou un format de validation cohérent si l'endpoint expose des erreurs structurées.
-- Pour API Platform, respecter les conventions du projet : input/output DTO, provider, processor, resource class ou state options.
+- Separate the public contract from the Doctrine model.
+- Use serializer groups only if they are already the project convention.
+- Do not rely only on serializer groups to protect sensitive fields: define an explicit output DTO if the API is sensitive.
+- Keep field names stable for API clients.
+- Plan an error DTO or coherent validation format if the endpoint exposes structured errors.
+- For API Platform, respect project conventions: input/output DTO, provider, processor, resource class, or state options.
 
-## Tests et validation
+## Tests and Validation
 
-À ajouter ou proposer selon le risque :
+Add or propose according to risk:
 
-- Test de validation d'un input DTO : cas valide, champs manquants, formats invalides, limites.
-- Test de mapping `fromEntity()` si le DTO contient des champs calculés, formats publics ou relations.
-- Test de handler/factory pour le mapping input DTO vers entité.
-- Test fonctionnel de désérialisation et validation pour un endpoint API.
-- Test de non-régression pour les champs sensibles non exposés.
+- Validation test for an input DTO: valid case, missing fields, invalid formats, limits.
+- `fromEntity()` mapping test if the DTO contains computed fields, public formats, or relations.
+- Handler/factory test for input DTO to entity mapping.
+- Functional deserialization and validation test for an API endpoint.
+- Regression test for sensitive fields not exposed.
 
-Commandes utiles si présentes :
+Useful commands if present:
 
-- `vendor/bin/phpunit --filter NomDuTest`
+- `vendor/bin/phpunit --filter TestName`
 - `bin/console lint:container`
 - `bin/console debug:validator App\\Dto\\ExampleDto`
-- PHPStan sur le périmètre modifié
+- PHPStan on the modified scope
 
-## Format de sortie
+## Output Format
 
-Pour une génération ou modification, fournir :
+For generation or modification, provide:
 
-- Fichiers créés ou modifiés
-- Type de DTO et use case couvert
-- Contraintes de validation ajoutées
-- Stratégie de mapping retenue
-- Choix de typage importants
-- Tests ou commandes de validation lancés
-- Limites ou hypothèses restantes
+- Files created or modified
+- DTO type and covered use case
+- Validation constraints added
+- Chosen mapping strategy
+- Important typing choices
+- Tests or validation commands run
+- Remaining limitations or assumptions
 
-Générer les classes DTO complètes avec namespace, imports, types, validation, mapping pertinent et exemple d'utilisation dans le handler, contrôleur ou processor si nécessaire.
+Generate complete DTO classes with namespace, imports, types, validation, relevant mapping, and usage example in the handler, controller, or processor if needed.

@@ -1,186 +1,186 @@
 # Claude Skills PHP & Symfony
 
-Skills Claude Code pour les développeurs PHP et Symfony. Chaque skill est un prompt spécialisé, versionné dans le projet, que l'équipe peut invoquer avec `/nom-du-skill`.
+Claude Code skills for PHP and Symfony developers. Each skill is a specialized prompt, versioned in the project, that the team can invoke with `/skill-name`.
 
 ## Installation
 
-Copiez les skills dans le projet cible :
+Copy the skills into the target project:
 
 ```bash
-# Un skill spécifique
-cp -r .claude/skills/review /chemin/du/projet/.claude/skills/
+# One specific skill
+cp -r .claude/skills/review /path/to/project/.claude/skills/
 
-# Tous les skills
-cp -r .claude/skills /chemin/du/projet/.claude/
+# All skills
+cp -r .claude/skills /path/to/project/.claude/
 ```
 
-Commitez le dossier `.claude/skills/` dans le projet cible pour le rendre disponible à toute l'équipe.
+Commit the `.claude/skills/` directory in the target project to make it available to the whole team.
 
-## Template CLAUDE.md
+## CLAUDE.md Template
 
-Un modèle de fichier `CLAUDE.md` est disponible dans [`templates/CLAUDE.md`](templates/CLAUDE.md).
+A `CLAUDE.md` file template is available in [`templates/CLAUDE.md`](templates/CLAUDE.md).
 
-Il peut être copié à la racine d'un projet PHP/Symfony pour documenter le contexte projet, la stack, les commandes utiles, les règles de sécurité et le workflow attendu avec Claude Code.
+It can be copied to the root of a PHP/Symfony project to document the project context, stack, useful commands, security rules, and expected workflow with Claude Code.
 
-Prompt recommandé pour générer un `CLAUDE.md` adapté à un projet :
+Recommended prompt to generate a `CLAUDE.md` tailored to a project:
 
 ```text
-À partir du template `templates/CLAUDE.md`, génère un fichier `CLAUDE.md` à la racine de ce projet.
+From the `templates/CLAUDE.md` template, generate a `CLAUDE.md` file at the root of this project.
 
-Avant d'écrire le fichier :
-- analyse la structure du projet ;
-- lis les fichiers de configuration utiles : `composer.json`, `composer.lock`, `symfony.lock`, `phpunit.xml*`, `phpstan*`, `.php-cs-fixer*`, `docker-compose*`, `Dockerfile*`, `Jenkinsfile`, `.github/workflows/*` s'ils existent ;
-- identifie les versions PHP, Symfony, Doctrine et les outils réellement utilisés ;
-- repère les commandes disponibles pour installer, tester, analyser et lancer le projet ;
-- déduis les conventions existantes sans inventer de règles non visibles dans le dépôt.
+Before writing the file:
+- analyze the project structure;
+- read the useful configuration files: `composer.json`, `composer.lock`, `symfony.lock`, `phpunit.xml*`, `phpstan*`, `.php-cs-fixer*`, `docker-compose*`, `Dockerfile*`, `Jenkinsfile`, `.github/workflows/*` if they exist;
+- identify the PHP, Symfony, Doctrine versions and the tools actually used;
+- identify the available commands to install, test, analyze, and run the project;
+- infer the existing conventions without inventing rules that are not visible in the repository.
 
-Ensuite :
-- remplace les placeholders du template par les informations du projet ;
-- conserve les sections utiles ;
-- supprime les exemples ou options qui ne s'appliquent pas ;
-- garde les règles de sécurité, Git et données sensibles ;
-- indique clairement les informations que tu n'as pas pu déterminer.
+Then:
+- replace the template placeholders with project information;
+- keep the useful sections;
+- remove examples or options that do not apply;
+- keep the security, Git, and sensitive data rules;
+- clearly state any information you could not determine.
 
-Avant modification, liste les changements prévus et attends ma validation.
+Before modifying, list the planned changes and wait for my validation.
 ```
 
-## Skills Disponibles
+## Available Skills
 
-### Qualité De Code
-
-| Skill | Description |
-|-------|-------------|
-| [`/review`](.claude/skills/review/SKILL.md) | Revue de code PHP/Symfony : bugs, sécurité, architecture, tests, Doctrine, migrations. |
-| [`/refactor`](.claude/skills/refactor/SKILL.md) | Refactoring sûr sans changer le comportement observable. |
-| [`/phpstan`](.claude/skills/phpstan/SKILL.md) | Correction des erreurs PHPStan sans ignore, baseline ou baisse de niveau. |
-| [`/deprecations`](.claude/skills/deprecations/SKILL.md) | Détection et correction des deprecations PHP/Symfony, y compris projets legacy. |
-| [`/doctrine`](.claude/skills/doctrine/SKILL.md) | Audit Doctrine ORM/DBAL : mappings, relations, repositories, transactions, performances. |
-
-### Tests Et Données
+### Code Quality
 
 | Skill | Description |
 |-------|-------------|
-| [`/test`](.claude/skills/test/SKILL.md) | Génération de tests PHPUnit unitaires, fonctionnels ou d'intégration. |
-| [`/fixtures`](.claude/skills/fixtures/SKILL.md) | Génération de fixtures Doctrine/Alice/Foundry réalistes et déterministes. |
+| [`/review`](.claude/skills/review/SKILL.md) | PHP/Symfony code review: bugs, security, architecture, tests, Doctrine, migrations. |
+| [`/refactor`](.claude/skills/refactor/SKILL.md) | Safe refactoring without changing observable behavior. |
+| [`/phpstan`](.claude/skills/phpstan/SKILL.md) | Fix PHPStan errors without ignores, baselines, or lowering the level. |
+| [`/deprecations`](.claude/skills/deprecations/SKILL.md) | Detect and fix PHP/Symfony deprecations, including legacy projects. |
+| [`/doctrine`](.claude/skills/doctrine/SKILL.md) | Doctrine ORM/DBAL audit: mappings, relations, repositories, transactions, performance. |
 
-### Sécurité, Performance Et Observabilité
-
-| Skill | Description |
-|-------|-------------|
-| [`/security`](.claude/skills/security/SKILL.md) | Audit sécurité basé sur l'OWASP Top 10 pour PHP/Symfony. |
-| [`/performance`](.claude/skills/performance/SKILL.md) | Audit performance : N+1, cache, Doctrine, Twig, HTTP, Messenger, batch. |
-| [`/observability`](.claude/skills/observability/SKILL.md) | Logs, traces, métriques, alerting, Sentry/APM et protection des données sensibles. |
-
-### Génération De Code
+### Tests and Data
 
 | Skill | Description |
 |-------|-------------|
-| [`/crud`](.claude/skills/crud/SKILL.md) | CRUD Symfony adapté au projet : Twig, API JSON, API Platform, DTOs, tests. |
-| [`/dto`](.claude/skills/dto/SKILL.md) | DTOs readonly typés, validation, mapping entité/DTO via handler ou factory. |
-| [`/command`](.claude/skills/command/SKILL.md) | Commandes Symfony Console avec arguments, options, validation, progress bar, dry-run. |
-| [`/api-doc`](.claude/skills/api-doc/SKILL.md) | Documentation OpenAPI/NelmioApiDocBundle pour endpoints Symfony. |
+| [`/test`](.claude/skills/test/SKILL.md) | Generate unit, functional, or integration PHPUnit tests. |
+| [`/fixtures`](.claude/skills/fixtures/SKILL.md) | Generate realistic and deterministic Doctrine/Alice/Foundry fixtures. |
 
-### Infrastructure Et CI
+### Security, Performance, and Observability
 
 | Skill | Description |
 |-------|-------------|
-| [`/docker`](.claude/skills/docker/SKILL.md) | Environnement Docker PHP/Symfony : PHP-FPM, web, DB, cache, queue, mail, assets. |
+| [`/security`](.claude/skills/security/SKILL.md) | Security audit based on the OWASP Top 10 for PHP/Symfony. |
+| [`/performance`](.claude/skills/performance/SKILL.md) | Performance audit: N+1, cache, Doctrine, Twig, HTTP, Messenger, batch. |
+| [`/observability`](.claude/skills/observability/SKILL.md) | Logs, traces, metrics, alerting, Sentry/APM, and protection of sensitive data. |
+
+### Code Generation
+
+| Skill | Description |
+|-------|-------------|
+| [`/crud`](.claude/skills/crud/SKILL.md) | Symfony CRUD tailored to the project: Twig, JSON API, API Platform, DTOs, tests. |
+| [`/dto`](.claude/skills/dto/SKILL.md) | Typed readonly DTOs, validation, entity/DTO mapping through handler or factory. |
+| [`/command`](.claude/skills/command/SKILL.md) | Symfony Console commands with arguments, options, validation, progress bar, dry-run. |
+| [`/api-doc`](.claude/skills/api-doc/SKILL.md) | OpenAPI/NelmioApiDocBundle documentation for Symfony endpoints. |
+
+### Infrastructure and CI
+
+| Skill | Description |
+|-------|-------------|
+| [`/docker`](.claude/skills/docker/SKILL.md) | PHP/Symfony Docker environment: PHP-FPM, web, DB, cache, queue, mail, assets. |
 
 ### Symfony
 
 | Skill | Description |
 |-------|-------------|
-| [`/migration`](.claude/skills/migration/SKILL.md) | Audit de migrations Doctrine : perte de données, up/down, verrous, zero-downtime. |
-| [`/messenger`](.claude/skills/messenger/SKILL.md) | Audit Symfony Messenger : transports, routing, retry, handlers, workers. |
-| [`/twig`](.claude/skills/twig/SKILL.md) | Audit Twig : sécurité, accessibilité, performance, formulaires, i18n, UX. |
+| [`/migration`](.claude/skills/migration/SKILL.md) | Doctrine migration audit: data loss, up/down, locks, zero-downtime. |
+| [`/messenger`](.claude/skills/messenger/SKILL.md) | Symfony Messenger audit: transports, routing, retry, handlers, workers. |
+| [`/twig`](.claude/skills/twig/SKILL.md) | Twig audit: security, accessibility, performance, forms, i18n, UX. |
 
-### Planification Et Onboarding
+### Planning and Onboarding
 
 | Skill | Description |
 |-------|-------------|
-| [`/plan`](.claude/skills/plan/SKILL.md) | Plan d'implémentation avant code : étapes, fichiers, tests, risques. |
-| [`/debug`](.claude/skills/debug/SKILL.md) | Diagnostic d'erreur, stacktrace, test en échec ou comportement inattendu. |
-| [`/upgrade`](.claude/skills/upgrade/SKILL.md) | Assistance upgrade PHP/Symfony/dépendances Composer. |
-| [`/onboard`](.claude/skills/onboard/SKILL.md) | Guide d'onboarding technique pour un projet PHP/Symfony. |
+| [`/plan`](.claude/skills/plan/SKILL.md) | Implementation plan before code: steps, files, tests, risks. |
+| [`/debug`](.claude/skills/debug/SKILL.md) | Diagnose an error, stacktrace, failing test, or unexpected behavior. |
+| [`/upgrade`](.claude/skills/upgrade/SKILL.md) | PHP/Symfony/Composer dependency upgrade assistance. |
+| [`/onboard`](.claude/skills/onboard/SKILL.md) | Technical onboarding guide for a PHP/Symfony project. |
 
-## Exemples D'Invocation
+## Invocation Examples
 
-| Besoin | Skill | Exemple |
-|--------|-------|---------|
-| Relire un diff avant commit | `/review` | `/review analyse le diff staged avant commit` |
-| Simplifier une classe sans changer le comportement | `/refactor` | `/refactor src/Service/InvoiceCalculator.php` |
-| Corriger PHPStan | `/phpstan` | `/phpstan corrige cette erreur PHPStan dans UserRepository` |
-| Préparer un upgrade | `/deprecations` | `/deprecations scanne les deprecations avant Symfony 6.4` |
-| Auditer Doctrine hors migration | `/doctrine` | `/doctrine vérifie le mapping et les relations de Order` |
-| Générer des tests | `/test` | `/test génère les tests pour src/Service/PriceCalculator.php` |
-| Créer des fixtures | `/fixtures` | `/fixtures ajoute un scénario de commande payée pour les tests fonctionnels` |
-| Auditer la sécurité | `/security` | `/security audite les contrôleurs modifiés` |
-| Diagnostiquer une lenteur | `/performance` | `/performance analyse pourquoi cet endpoint fait trop de requêtes SQL` |
-| Améliorer les logs | `/observability` | `/observability ajoute les logs utiles autour du handler de paiement` |
-| Générer un CRUD | `/crud` | `/crud crée un CRUD Twig pour Product avec tests et migration` |
-| Créer des DTOs | `/dto` | `/dto crée les DTO input/output pour l'endpoint de création utilisateur` |
-| Créer une commande | `/command` | `/command génère une commande d'import CSV avec dry-run` |
-| Documenter une API | `/api-doc` | `/api-doc documente l'endpoint POST /api/orders` |
-| Ajouter Docker | `/docker` | `/docker génère un environnement local avec PostgreSQL, Redis et Mailpit` |
-| Auditer une migration | `/migration` | `/migration vérifie la dernière migration Doctrine pour le zero-downtime` |
-| Auditer Messenger | `/messenger` | `/messenger vérifie routing, retry et failed transport` |
-| Auditer Twig | `/twig` | `/twig audite templates/order/show.html.twig` |
-| Planifier une feature | `/plan` | `/plan prépare l'implémentation d'un export CSV de factures` |
-| Déboguer une erreur | `/debug` | `/debug analyse cette stacktrace Symfony` |
-| Monter de version | `/upgrade` | `/upgrade prépare le passage de Symfony 5.4 à 6.4` |
-| Documenter un projet | `/onboard` | `/onboard génère un guide pour un nouveau développeur` |
+| Need | Skill | Example |
+|------|-------|---------|
+| Review a diff before commit | `/review` | `/review analyze the staged diff before commit` |
+| Simplify a class without changing behavior | `/refactor` | `/refactor src/Service/InvoiceCalculator.php` |
+| Fix PHPStan | `/phpstan` | `/phpstan fix this PHPStan error in UserRepository` |
+| Prepare an upgrade | `/deprecations` | `/deprecations scan deprecations before Symfony 6.4` |
+| Audit Doctrine outside migrations | `/doctrine` | `/doctrine check the mapping and relations of Order` |
+| Generate tests | `/test` | `/test generate tests for src/Service/PriceCalculator.php` |
+| Create fixtures | `/fixtures` | `/fixtures add a paid order scenario for functional tests` |
+| Audit security | `/security` | `/security audit the modified controllers` |
+| Diagnose slowness | `/performance` | `/performance analyze why this endpoint runs too many SQL queries` |
+| Improve logs | `/observability` | `/observability add useful logs around the payment handler` |
+| Generate a CRUD | `/crud` | `/crud create a Twig CRUD for Product with tests and migration` |
+| Create DTOs | `/dto` | `/dto create input/output DTOs for the user creation endpoint` |
+| Create a command | `/command` | `/command generate a CSV import command with dry-run` |
+| Document an API | `/api-doc` | `/api-doc document the POST /api/orders endpoint` |
+| Add Docker | `/docker` | `/docker generate a local environment with PostgreSQL, Redis, and Mailpit` |
+| Audit a migration | `/migration` | `/migration check the latest Doctrine migration for zero-downtime` |
+| Audit Messenger | `/messenger` | `/messenger check routing, retry, and failed transport` |
+| Audit Twig | `/twig` | `/twig audit templates/order/show.html.twig` |
+| Plan a feature | `/plan` | `/plan prepare the implementation of an invoice CSV export` |
+| Debug an error | `/debug` | `/debug analyze this Symfony stacktrace` |
+| Upgrade versions | `/upgrade` | `/upgrade prepare the move from Symfony 5.4 to 6.4` |
+| Document a project | `/onboard` | `/onboard generate a guide for a new developer` |
 
-## Convention De Structure
+## Structure Convention
 
-Chaque skill est un dossier dans `.claude/skills/<nom>/` avec un fichier obligatoire `SKILL.md`.
+Each skill is a directory in `.claude/skills/<name>/` with a required `SKILL.md` file.
 
 ```text
 .claude/
 └── skills/
-    └── nom-du-skill/
+    └── skill-name/
         └── SKILL.md
 ```
 
-Le nom du dossier et le champ `name` doivent être identiques.
+The directory name and the `name` field must be identical.
 
 ```yaml
 ---
-name: nom-du-skill
-description: "Description courte et précise du moment où utiliser ce skill."
+name: skill-name
+description: "Short and precise description of when to use this skill."
 ---
 ```
 
-Règles recommandées :
+Recommended rules:
 
-- Utiliser un nom court, en minuscules, avec tirets si nécessaire.
-- Rédiger le skill en français technique, avec les termes natifs anglais quand ils viennent de l'écosystème : `DTO`, `handler`, `dry-run`, `readonly`, `failure transport`.
-- Commencer par un **Périmètre** clair.
-- Ajouter un **État des lieux** quand le skill doit inspecter un projet.
-- Décrire les **Sévérités** pour les skills d'audit.
-- Lister les commandes utiles, mais signaler les commandes destructives à éviter sans confirmation.
-- Inclure une section **Ne pas faire** pour les garde-fous.
-- Terminer par un **Format de sortie** exploitable.
-- Ne jamais demander de lire `.env.local`.
-- Ne jamais masquer secrets, tokens, cookies, DSN, mots de passe ou données personnelles sensibles.
-- Respecter les projets legacy : ne pas supposer PHP 8+, attributs, enums, readonly ou Symfony récent sans preuve.
+- Use a short lowercase name, with hyphens when needed.
+- Write the skill in technical English, keeping native ecosystem terms such as `DTO`, `handler`, `dry-run`, `readonly`, `failure transport`.
+- Start with a clear **Scope** section.
+- Add a **Current State** section when the skill must inspect a project.
+- Describe **Severities** for audit skills.
+- List useful commands, but flag destructive commands to avoid without confirmation.
+- Include a **Do Not** section for guardrails.
+- End with an actionable **Output Format** section.
+- Never ask to read `.env.local`.
+- Never expose secrets, tokens, cookies, DSNs, passwords, or sensitive personal data.
+- Respect legacy projects: do not assume PHP 8+, attributes, enums, readonly, or recent Symfony without proof.
 
 ## Contribution
 
-Pour ajouter ou modifier un skill :
+To add or modify a skill:
 
-1. Créer ou modifier `.claude/skills/<nom>/SKILL.md`.
-2. Vérifier que le frontmatter contient `name` et `description`.
-3. Vérifier que `name` correspond au dossier.
-4. Ajouter le skill dans la liste du README.
-5. Ajouter au moins un exemple d'invocation.
-6. Relire les garde-fous : secrets, `.env.local`, commandes destructives, compatibilité legacy.
+1. Create or modify `.claude/skills/<name>/SKILL.md`.
+2. Check that the front matter contains `name` and `description`.
+3. Check that `name` matches the directory.
+4. Add the skill to the README list.
+5. Add at least one invocation example.
+6. Reread the guardrails: secrets, `.env.local`, destructive commands, legacy compatibility.
 
-Un commit doit idéalement concerner un seul skill, sauf ajout coordonné comme un nouveau skill avec README.
+A commit should ideally cover a single skill, except for a coordinated addition such as a new skill with the README.
 
-## Licence
+## License
 
 MIT
 
 ---
 
-Maintenu par [Efficience IT](https://www.itefficience.com) - Expertise PHP & Symfony
+Maintained by [Efficience IT](https://www.itefficience.com) - PHP & Symfony Expertise

@@ -1,196 +1,196 @@
 ---
 name: deprecations
-description: "Scanne et corrige les deprecations PHP et Symfony dans un projet PHP/Symfony, y compris legacy PHP 7.0+. Identifie le code obsolète, la version de suppression, l'origine projet ou vendor, et propose des remplacements compatibles avec la version cible sans imposer d'upgrade."
+description: "Scans and fixes PHP and Symfony deprecations in a PHP/Symfony project, including legacy PHP 7.0+. Identifies obsolete code, removal version, project or vendor origin, and proposes replacements compatible with the target version without imposing an upgrade."
 ---
 
-# Détection des deprecations
+# Deprecation Detection
 
-## Périmètre
+## Scope
 
-Déterminer si l'utilisateur demande :
+Determine whether the user is asking for:
 
-- Un diagnostic uniquement : ne pas modifier le code.
-- L'application de corrections : procéder par lots vérifiables.
-- Un périmètre ciblé : PHP, Symfony, Doctrine, bundle, configuration, tests, fichier ou dossier.
-- Une version cible : PHP 7.x, PHP 8.x, Symfony 2.8/3.4/4.4/5.4/6.4/7.x, ou une dépendance précise.
+- Diagnosis only: do not modify code.
+- Applying fixes: proceed through verifiable batches.
+- A targeted scope: PHP, Symfony, Doctrine, bundle, configuration, tests, file, or directory.
+- A target version: PHP 7.x, PHP 8.x, Symfony 2.8/3.4/4.4/5.4/6.4/7.x, or a precise dependency.
 
-Si aucune version cible n'est donnée, analyser la version actuelle du projet et signaler les deprecations pertinentes sans supposer une montée de version.
+If no target version is given, analyze the current project version and report relevant deprecations without assuming an upgrade.
 
-Ne jamais monter la version PHP, Symfony ou une dépendance sans validation explicite.
+Never upgrade PHP, Symfony, or a dependency without explicit validation.
 
-## État des lieux
+## Current State
 
-Inspecter selon le projet :
+Inspect according to the project:
 
 - `composer.json`, `composer.lock`, `symfony.lock`
-- Version PHP requise, `config.platform.php`, contraintes Composer et extensions PHP
-- Version Symfony, bundles tiers, Doctrine, PHPUnit, PHPStan, Rector
+- Required PHP version, `config.platform.php`, Composer constraints, and PHP extensions
+- Symfony version, third-party bundles, Doctrine, PHPUnit, PHPStan, Rector
 - `phpunit.xml*`, `phpstan.neon*`, `rector.php`
 - `config/bundles.php`, `config/packages/`, `config/routes/`
-- Scripts Composer de test, analyse statique ou deprecation helper
-- CI, Dockerfile ou configuration runtime si la version PHP réelle est ambiguë
+- Composer scripts for tests, static analysis, or deprecation helper
+- CI, Dockerfile, or runtime configuration if the real PHP version is ambiguous
 
-Ne jamais lire ni modifier `.env.local`.
+Never read or modify `.env.local`.
 
-## Processus
+## Process
 
-1. Identifier les versions actuelles et la cible éventuelle.
-2. Reproduire ou collecter les deprecations : logs, tests, `debug:container --deprecations`, PHPUnit, PHPStan, Rector dry-run si présent.
-3. Classer chaque deprecation : PHP, Symfony, Doctrine, PHPUnit, bundle tiers, code projet, configuration.
-4. Vérifier la version où l'API est supprimée ou devient incompatible.
-5. Corriger d'abord le code projet et la configuration, puis proposer une stratégie pour les dépendances tierces.
-6. Relancer la commande qui exposait la deprecation.
-7. Lancer les tests ciblés si le comportement runtime peut être impacté.
+1. Identify current versions and possible target.
+2. Reproduce or collect deprecations: logs, tests, `debug:container --deprecations`, PHPUnit, PHPStan, Rector dry-run if present.
+3. Classify each deprecation: PHP, Symfony, Doctrine, PHPUnit, third-party bundle, project code, configuration.
+4. Check the version where the API is removed or becomes incompatible.
+5. Fix project code and configuration first, then propose a strategy for third-party dependencies.
+6. Rerun the command that exposed the deprecation.
+7. Run targeted tests if runtime behavior may be impacted.
 
-Ne pas mélanger nettoyage de deprecations, upgrade majeure et refactor large sauf demande explicite.
+Do not mix deprecation cleanup, major upgrade, and broad refactor unless explicitly requested.
 
-## Priorités
+## Priorities
 
-- **Bloquant** : API supprimée dans la version cible, deprecation qui casse les tests avec `SYMFONY_DEPRECATIONS_HELPER`, incompatibilité runtime certaine.
-- **Important** : deprecation sur chemin critique, bruit massif qui masque d'autres erreurs, correction nécessaire avant upgrade proche.
-- **Suggestion** : remplacement moderne utile mais non requis pour la version cible actuelle.
+- **Blocking**: API removed in the target version, deprecation that breaks tests with `SYMFONY_DEPRECATIONS_HELPER`, certain runtime incompatibility.
+- **Important**: deprecation on a critical path, massive noise hiding other errors, fix needed before a near-term upgrade.
+- **Suggestion**: useful modern replacement but not required for the current target version.
 
-## Deprecations PHP
+## PHP Deprecations
 
-Toujours vérifier la version PHP actuelle et la version cible avant de corriger. Pour un projet legacy, proposer un remplacement compatible avec la version minimale supportée.
+Always check the current PHP version and target version before fixing. For a legacy project, propose a replacement compatible with the minimum supported version.
 
 ### PHP 7.0
 
-- Constructeurs style PHP 4 (`function ClassName()`) : utiliser `__construct()`.
-- `preg_replace()` avec modificateur `/e` supprimé : remplacer par `preg_replace_callback()`.
-- Extensions supprimées ou obsolètes selon le runtime : `mysql_*`, `ereg_*`, `mcrypt` à traiter avec prudence selon la version réelle.
-- Méthodes ou usages incompatibles avec le typage scalaire si le projet commence à typer progressivement.
+- PHP 4-style constructors (`function ClassName()`): use `__construct()`.
+- `preg_replace()` with `/e` modifier removed: replace with `preg_replace_callback()`.
+- Removed or obsolete extensions according to runtime: `mysql_*`, `ereg_*`, `mcrypt`, to handle carefully according to the real version.
+- Methods or usages incompatible with scalar typing if the project starts typing gradually.
 
 ### PHP 7.1
 
-- Appels à des fonctions avec trop peu d'arguments : corriger la signature ou l'appel.
-- `mcrypt` déprécié : migrer vers `openssl` ou `sodium` selon le besoin.
-- `each()` déprécié : remplacer par `foreach`.
-- `create_function()` déprécié : remplacer par closure.
+- Function calls with too few arguments: fix the signature or call.
+- `mcrypt` deprecated: migrate to `openssl` or `sodium` according to need.
+- `each()` deprecated: replace with `foreach`.
+- `create_function()` deprecated: replace with closure.
 
 ### PHP 7.2
 
-- `__autoload()` déprécié : utiliser `spl_autoload_register()`.
-- `count()` sur type non countable : vérifier le type ou utiliser une garde.
-- `assert()` avec string : remplacer par expression booléenne.
-- `parse_str()` sans second argument : fournir un tableau de sortie.
+- `__autoload()` deprecated: use `spl_autoload_register()`.
+- `count()` on non-countable type: check type or use a guard.
+- `assert()` with string: replace with boolean expression.
+- `parse_str()` without second argument: provide an output array.
 
 ### PHP 7.3
 
-- `FILTER_FLAG_SCHEME_REQUIRED` et `FILTER_FLAG_HOST_REQUIRED` dépréciés.
-- `case-insensitive constants` dépréciées : utiliser des constantes sensibles à la casse.
-- Certaines syntaxes heredoc/nowdoc anciennes peuvent nécessiter une normalisation avant upgrade.
+- `FILTER_FLAG_SCHEME_REQUIRED` and `FILTER_FLAG_HOST_REQUIRED` deprecated.
+- `case-insensitive constants` deprecated: use case-sensitive constants.
+- Some old heredoc/nowdoc syntaxes may require normalization before upgrade.
 
 ### PHP 7.4
 
-- Accès array/string avec accolades : `$foo{0}` -> `$foo[0]`.
-- `get_magic_quotes_gpc()` et magic quotes : supprimer les branches mortes.
-- `implode($pieces, $glue)` ancien ordre : utiliser `implode($glue, $pieces)`.
-- Propriétés typées à introduire seulement si compatible avec la version minimale du projet.
+- Array/string access with braces: `$foo{0}` -> `$foo[0]`.
+- `get_magic_quotes_gpc()` and magic quotes: remove dead branches.
+- Old `implode($pieces, $glue)` order: use `implode($glue, $pieces)`.
+- Typed properties only to introduce if compatible with the project's minimum version.
 
 ### PHP 8.0
 
-- Signature de méthodes incompatibles avec les interfaces internes : aligner les signatures.
-- Paramètres obligatoires après paramètres optionnels : réordonner ou rendre la signature explicite.
-- `match`, nullsafe, attributes disponibles mais ne pas les introduire si la compatibilité PHP 7.x doit rester.
-- Warnings transformés en `TypeError` ou `ValueError` : corriger les entrées plutôt que masquer l'erreur.
+- Method signatures incompatible with internal interfaces: align signatures.
+- Required parameters after optional parameters: reorder or make the signature explicit.
+- `match`, nullsafe, attributes available but do not introduce them if PHP 7.x compatibility must remain.
+- Warnings transformed into `TypeError` or `ValueError`: fix inputs rather than hiding the error.
 
 ### PHP 8.1
 
 - `FILTER_SANITIZE_STRING`, `strftime()`, `utf8_encode()`/`utf8_decode()`
-- Retour implicite de `null` pour méthodes internes non compatible : aligner les types.
-- Passage de `null` à des paramètres internes non nullable : ajouter conversion ou garde explicite.
-- Serializable déprécié sans `__serialize()` / `__unserialize()`.
-- `DateTime` et `Intl` : vérifier les formats dépendants de locale.
+- Implicit `null` return for internal methods incompatible: align types.
+- Passing `null` to non-nullable internal parameters: add conversion or explicit guard.
+- Serializable deprecated without `__serialize()` / `__unserialize()`.
+- `DateTime` and `Intl`: check locale-dependent formats.
 
 ### PHP 8.2
 
-- Propriétés dynamiques, `${var}` string interpolation, callables partiellement supportés
-- `utf8_encode()` et `utf8_decode()` dépréciés : utiliser `mb_convert_encoding()` ou une stratégie charset explicite.
-- `FILTER_SANITIZE_STRING` supprimé : remplacer par validation/normalisation adaptée au contexte.
-- `DateTimeInterface::ISO8601` à éviter selon le contexte : préférer `DateTimeInterface::ATOM` si le contrat le permet.
+- Dynamic properties, `${var}` string interpolation, partially supported callables
+- `utf8_encode()` and `utf8_decode()` deprecated: use `mb_convert_encoding()` or an explicit charset strategy.
+- `FILTER_SANITIZE_STRING` removed: replace with validation/normalization adapted to the context.
+- `DateTimeInterface::ISO8601` to avoid depending on context: prefer `DateTimeInterface::ATOM` if the contract allows it.
 
 ### PHP 8.3
 
 - `NumberFormatter::TYPE_CURRENCY`
-- Vérifier les deprecations des extensions `intl`, `mbstring`, `random`, `DateTime` selon les usages.
-- Corriger seulement si la version cible ou les tests les exposent.
+- Check deprecations from `intl`, `mbstring`, `random`, `DateTime` extensions according to usages.
+- Fix only if the target version or tests expose them.
 
 ### PHP 8.4
 
-- Constantes de classes sans visibilité explicite
-- Paramètres implicitement nullable via `Type $param = null` dépréciés : utiliser `?Type $param = null`.
-- Nouvelles deprecations des extensions internes : vérifier la documentation et les logs du projet.
+- Class constants without explicit visibility
+- Implicitly nullable parameters through `Type $param = null` deprecated: use `?Type $param = null`.
+- New internal extension deprecations: check project documentation and logs.
 
-## Deprecations Symfony
+## Symfony Deprecations
 
-Toujours vérifier la version Symfony actuelle, la version cible et la version PHP minimale avant de proposer un remplacement. Les projets legacy peuvent nécessiter une correction compatible avec annotations, YAML/XML, PHP 7.x ou anciens composants.
+Always check the current Symfony version, target version, and minimum PHP version before proposing a replacement. Legacy projects may require a fix compatible with annotations, YAML/XML, PHP 7.x, or old components.
 
 ### Symfony 6.4 LTS
 
-- Corriger les deprecations avant Symfony 7 : options de configuration supprimées, signatures typées, services ou aliases retirés.
-- Vérifier les bundles tiers compatibles Symfony 7.
-- Privilégier attributs, injection explicite et types modernes si la version PHP minimale du projet le permet.
-- Vérifier Security, Messenger, Serializer, Notifier, HttpClient et Doctrine Bridge.
+- Fix deprecations before Symfony 7: removed configuration options, typed signatures, removed services or aliases.
+- Check third-party bundles compatible with Symfony 7.
+- Prefer attributes, explicit injection, and modern types if the project's minimum PHP version allows it.
+- Check Security, Messenger, Serializer, Notifier, HttpClient, and Doctrine Bridge.
 
 ### Symfony 7.x
 
-- Vérifier les suppressions issues des deprecations Symfony 6.4.
-- Les remplacements doivent rester compatibles avec la version mineure ciblée.
-- Ne pas utiliser des APIs introduites en Symfony 7.1+ si le projet cible Symfony 7.0.
+- Check removals from Symfony 6.4 deprecations.
+- Replacements must remain compatible with the targeted minor version.
+- Do not use APIs introduced in Symfony 7.1+ if the project targets Symfony 7.0.
 
-- Annotations au lieu d'attributs PHP 8
+- Annotations instead of PHP 8 attributes
 - `ContainerAwareTrait` / `ContainerAwareCommand`
 - `AbstractController::getDoctrine()`
-- `@Route` annotation au lieu de `#[Route]`
-- `EventSubscriberInterface` remplacé par `#[AsEventListener]` (Symfony 6.2+)
-- Services récupérés directement depuis le container au lieu de l'injection explicite
-- Alias de services, paramètres ou options de configuration renommés
-- Config YAML déplacée ou renommée entre versions Symfony
-- Security : guard authenticator remplacé, voters ou access control à adapter selon la version
-- Forms : options dépréciées, types ou extensions renommés
-- Validator : contraintes, options ou annotations remplacées par attributs selon la cible
-- Serializer : normalizers, context options et groupes à vérifier
-- Routing : annotations Doctrine vs attributs PHP selon la version PHP minimale
-- Event Dispatcher : noms d'événements string remplacés par classes ou attributs selon le composant
-- Doctrine Bridge : registry, annotations, mapping et migrations à vérifier
+- `@Route` annotation instead of `#[Route]`
+- `EventSubscriberInterface` replaced by `#[AsEventListener]` (Symfony 6.2+)
+- Services fetched directly from the container instead of explicit injection
+- Renamed service aliases, parameters, or configuration options
+- YAML config moved or renamed between Symfony versions
+- Security: replaced guard authenticator, voters or access control to adapt according to version
+- Forms: deprecated options, renamed types or extensions
+- Validator: constraints, options, or annotations replaced by attributes according to target
+- Serializer: normalizers, context options, and groups to check
+- Routing: Doctrine annotations vs PHP attributes according to minimum PHP version
+- Event Dispatcher: string event names replaced by classes or attributes according to component
+- Doctrine Bridge: registry, annotations, mapping, and migrations to check
 
-Ne pas remplacer automatiquement annotations par attributs si le projet doit rester compatible PHP 7.x.
+Do not automatically replace annotations with attributes if the project must remain PHP 7.x compatible.
 
-## Deprecations Doctrine, PHPUnit et outils
+## Doctrine, PHPUnit, and Tool Deprecations
 
-- Doctrine annotations vers attributs : seulement si PHP 8+ est validé.
-- Doctrine DBAL : types, plateformes, `executeUpdate()` vers `executeStatement()`, méthodes de fetch remplacées.
-- Doctrine ORM : annotations, proxy, mapping driver, repository signatures.
-- PHPUnit : annotations vers attributs seulement si la version PHP cible le permet.
-- PHPUnit assertions ou signatures de hooks (`setUp`, `tearDown`) à aligner avec la version installée.
-- PHPStan/Psalm : ne jamais ajouter d'ignore pour masquer une deprecation.
+- Doctrine annotations to attributes: only if PHP 8+ is validated.
+- Doctrine DBAL: types, platforms, `executeUpdate()` to `executeStatement()`, replaced fetch methods.
+- Doctrine ORM: annotations, proxy, mapping driver, repository signatures.
+- PHPUnit: annotations to attributes only if the target PHP version allows it.
+- PHPUnit assertions or hook signatures (`setUp`, `tearDown`) to align with installed version.
+- PHPStan/Psalm: never add ignores to hide a deprecation.
 
-## Dépendances et vendor
+## Dependencies and Vendor
 
-- Ne jamais modifier `vendor/`.
-- Si la deprecation vient d'un package tiers, identifier le package et la version.
-- Vérifier si une version plus récente corrige la deprecation.
-- Utiliser `composer why`, `composer why-not` ou `composer outdated` pour expliquer le blocage.
-- Proposer un update, un remplacement de package ou une issue upstream si le projet ne peut pas corriger directement.
-- Ne pas supprimer un bundle sans vérifier ses usages dans code, config, templates et tests.
+- Never modify `vendor/`.
+- If the deprecation comes from a third-party package, identify the package and version.
+- Check whether a newer version fixes the deprecation.
+- Use `composer why`, `composer why-not`, or `composer outdated` to explain the blocker.
+- Propose an update, package replacement, or upstream issue if the project cannot fix directly.
+- Do not remove a bundle without checking its usages in code, config, templates, and tests.
 
 ## Rector
 
-Si Rector est déjà présent (`rector.php`, dépendance `rector/rector` ou script Composer dédié), il peut aider aux migrations mécaniques.
+If Rector is already present (`rector.php`, `rector/rector` dependency, or dedicated Composer script), it can help with mechanical migrations.
 
-Règles :
+Rules:
 
-- Ne pas installer Rector sans demande explicite.
-- Lancer d'abord Rector en dry-run.
-- Limiter le périmètre si l'utilisateur a demandé un fichier, dossier ou type de deprecation.
-- Relire le diff avant de considérer la correction valide.
-- Refuser les changements qui modifient le comportement métier.
-- Ne pas introduire de syntaxe PHP plus récente que la version minimale supportée.
+- Do not install Rector without an explicit request.
+- Run Rector in dry-run first.
+- Limit the scope if the user requested a file, directory, or deprecation type.
+- Reread the diff before considering the fix valid.
+- Reject changes that modify business behavior.
+- Do not introduce PHP syntax newer than the minimum supported version.
 
-## Commandes utiles
+## Useful Commands
 
-Adapter les commandes au projet :
+Adapt commands to the project:
 
 - `bin/console debug:container --deprecations`
 - `bin/console about`
@@ -201,38 +201,38 @@ Adapter les commandes au projet :
 - `SYMFONY_DEPRECATIONS_HELPER=weak vendor/bin/phpunit`
 - `SYMFONY_DEPRECATIONS_HELPER=max[self]=0 vendor/bin/phpunit`
 - `vendor/bin/phpstan analyse`
-- `vendor/bin/rector process --dry-run` si Rector est présent
+- `vendor/bin/rector process --dry-run` if Rector is present
 
-Rapporter les commandes lancées et leur résultat. Ne pas lancer de commande coûteuse ou destructive sans raison claire.
+Report commands run and their result. Do not run costly or destructive commands without a clear reason.
 
-## Ne pas faire
+## Do Not
 
-- Ne pas masquer ou ignorer les deprecations.
-- Ne pas changer la version PHP, Symfony ou Composer sans validation explicite.
-- Ne pas modifier `.env.local` ou des secrets.
-- Ne pas introduire attributs, enums, readonly, nullsafe ou autre syntaxe PHP 8 dans un projet qui supporte PHP 7.x.
-- Ne pas remplacer une API par une autre sans vérifier la version minimale qui l'introduit.
-- Ne pas faire de refactor large pour corriger une deprecation locale.
-- Ne pas modifier `composer.lock` à la main.
-- Ne pas supprimer un package ou bundle sans preuve qu'il n'est plus utilisé.
+- Do not hide or ignore deprecations.
+- Do not change PHP, Symfony, or Composer version without explicit validation.
+- Do not modify `.env.local` or secrets.
+- Do not introduce attributes, enums, readonly, nullsafe, or other PHP 8 syntax in a project that supports PHP 7.x.
+- Do not replace one API with another without checking the minimum version that introduces it.
+- Do not perform broad refactoring to fix a local deprecation.
+- Do not modify `composer.lock` by hand.
+- Do not remove a package or bundle without proof it is no longer used.
 
-## Format de sortie
+## Output Format
 
-Pour un diagnostic :
+For a diagnosis:
 
-- Versions détectées : PHP, Symfony, dépendances clés
-- Cible analysée ou hypothèse utilisée
-- Liste des deprecations avec fichier, ligne, origine, message, version de suppression
-- Remplacement recommandé compatible avec la version minimale du projet
-- Priorité : bloquant, important, suggestion
-- Commandes lancées et résultat
-- Plan de correction ordonné
+- Detected versions: PHP, Symfony, key dependencies
+- Analyzed target or hypothesis used
+- Deprecation list with file, line, origin, message, removal version
+- Recommended replacement compatible with the project's minimum version
+- Priority: blocking, important, suggestion
+- Commands run and result
+- Ordered correction plan
 
-Après correction :
+After correction:
 
-- Fichiers modifiés
-- Deprecations corrigées
-- Remplacements appliqués
-- Commandes relancées et résultat
-- Tests exécutés ou non exécutés
-- Risques, deprecations restantes ou dépendances tierces bloquantes
+- Modified files
+- Deprecations fixed
+- Replacements applied
+- Commands rerun and result
+- Tests executed or not executed
+- Risks, remaining deprecations, or blocking third-party dependencies

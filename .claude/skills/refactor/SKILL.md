@@ -1,95 +1,95 @@
 ---
 name: refactor
-description: "Refactoring sûr pour projet PHP/Symfony. À utiliser pour simplifier une classe ou méthode, extraire une logique métier, réduire la duplication, déplacer du code entre Domain/Application/Infrastructure, ou améliorer la conception sans changer le comportement observable."
+description: "Safe refactoring for PHP/Symfony projects. Use to simplify a class or method, extract business logic, reduce duplication, move code between Domain/Application/Infrastructure, or improve design without changing observable behavior."
 ---
 
-# Refactoring PHP/Symfony
+# PHP/Symfony Refactoring
 
-## Périmètre
+## Scope
 
-Si l'utilisateur précise un fichier, une classe, un dossier ou un diff, limiter le refactor à ce périmètre.
+If the user specifies a file, class, directory, or diff, limit the refactor to that scope.
 
-Si le périmètre est ambigu ou trop large, demander une cible avant de modifier le code.
+If the scope is ambiguous or too broad, ask for a target before modifying code.
 
-## Processus
+## Process
 
-1. Lire le code cible et ses tests existants.
-2. Rechercher les appels entrants et usages publics de la classe ou méthode.
-3. Identifier l'architecture réelle du projet : MVC classique, hexagonale, DDD partiel ou autre.
-4. Choisir le plus petit refactor qui améliore le code sans changer le comportement.
-5. Appliquer les modifications par étapes cohérentes, en gardant le code compilable.
-6. Lancer les tests ciblés si possible, ou indiquer précisément ceux à lancer.
+1. Read the target code and its existing tests.
+2. Search for incoming calls and public usages of the class or method.
+3. Identify the project's real architecture: classic MVC, hexagonal, partial DDD, or another model.
+4. Choose the smallest refactor that improves the code without changing behavior.
+5. Apply changes in coherent steps, keeping the code compilable.
+6. Run targeted tests if possible, or state precisely which tests to run.
 
-## Principes
+## Principles
 
-- Préserver le comportement observable : mêmes entrées, sorties, exceptions, effets de bord et contrats publics.
-- Respecter les conventions existantes du projet avant d'appliquer une règle générale.
-- Garder les contrôleurs, commandes, handlers et listeners minces : parsing, délégation, output.
-- Déplacer la logique métier vers un service applicatif, un use case ou le Domain selon l'architecture existante.
-- Préférer des noms qui décrivent l'intention métier plutôt que la mécanique technique.
-- Réduire le couplage sans disperser inutilement le code.
+- Preserve observable behavior: same inputs, outputs, exceptions, side effects, and public contracts.
+- Respect the project's existing conventions before applying a general rule.
+- Keep controllers, commands, handlers, and listeners thin: parsing, delegation, output.
+- Move business logic to an application service, use case, or the Domain according to the existing architecture.
+- Prefer names that describe business intent rather than technical mechanics.
+- Reduce coupling without needlessly scattering the code.
 
 ## Architecture
 
-- Ne pas imposer une architecture hexagonale complète à un projet MVC simple.
-- Si le projet est hexagonal, le Domain ne dépend pas de Symfony, Doctrine, Infrastructure ou Framework.
-- Si des use cases existent, les placer dans Application/ et leur laisser l'orchestration.
-- Les repositories exécutent les requêtes ; les décisions métier restent dans Domain/Application.
-- Les adapters Infrastructure implémentent les ports ou interfaces attendus par Domain/Application.
-- Ne pas déplacer une classe seulement pour suivre une théorie si le projet n'a pas cette organisation.
+- Do not impose a full hexagonal architecture on a simple MVC project.
+- If the project is hexagonal, the Domain does not depend on Symfony, Doctrine, Infrastructure, or the Framework.
+- If use cases exist, place them in Application/ and let them handle orchestration.
+- Repositories execute queries; business decisions remain in Domain/Application.
+- Infrastructure adapters implement the ports or interfaces expected by Domain/Application.
+- Do not move a class only to follow a theory if the project does not have that organization.
 
-### Principes SOLID
+### SOLID Principles
 
-- **S** : une classe a une responsabilité identifiable.
-- **O** : préférer l'extension seulement quand plusieurs variantes existent ou sont prévues explicitement.
-- **L** : un sous-type doit rester substituable sans surprise.
-- **I** : préférer des interfaces petites et ciblées.
-- **D** : dépendre d'abstractions quand cela protège réellement le Domain ou un point d'extension.
+- **S**: a class has one identifiable responsibility.
+- **O**: prefer extension only when several variants exist or are explicitly planned.
+- **L**: a subtype must remain substitutable without surprises.
+- **I**: prefer small, focused interfaces.
+- **D**: depend on abstractions when it genuinely protects the Domain or an extension point.
 
-## Refactors courants
+## Common Refactors
 
-- Méthode > 20 lignes : extraire en méthodes privées nommées par intention
-- Classe > 250 lignes : identifier les responsabilités avant d'extraire
-- Contrôleur avec logique métier : extraire vers un service applicatif ou un use case
-- Commande console lourde : extraire la logique vers un service, garder la commande pour l'I/O
-- Listener, subscriber ou handler lourd : extraire vers un service dédié
-- Repository avec logique métier : extraire vers un service du Domain
-- Conditions imbriquées : privilégier early returns, méthodes privées nommées ou stratégie si plusieurs variantes réelles existent
-- Duplication de validation : extraire vers DTO, constraint, validator ou service selon les conventions du projet
-- Construction complexe d'objet : extraire une factory seulement si la construction est réutilisée ou porte une règle métier
+- Method > 20 lines: extract into private methods named by intent
+- Class > 250 lines: identify responsibilities before extracting
+- Controller with business logic: extract to an application service or use case
+- Heavy console command: extract logic to a service, keep the command for I/O
+- Heavy listener, subscriber, or handler: extract to a dedicated service
+- Repository with business logic: extract to a Domain service
+- Nested conditions: prefer early returns, named private methods, or a strategy if several real variants exist
+- Duplicated validation: extract to DTO, constraint, validator, or service according to project conventions
+- Complex object construction: extract a factory only if construction is reused or carries a business rule
 
 ## Abstractions
 
-- Ne pas créer d'abstraction pour un seul cas d'utilisation.
-- Interface acceptable pour une dépendance sortante du Domain ou un point d'extension réel.
-- Stratégie acceptable si au moins deux comportements existent ou sont explicitement demandés.
-- Factory acceptable si la construction est complexe, réutilisée ou métier.
-- Service dédié acceptable si le comportement extrait porte un nom clair et réduit une responsabilité.
-- Éviter les abstractions "au cas où".
+- Do not create an abstraction for a single use case.
+- An interface is acceptable for an outgoing Domain dependency or a real extension point.
+- A strategy is acceptable if at least two behaviors exist or are explicitly requested.
+- A factory is acceptable if construction is complex, reused, or business-related.
+- A dedicated service is acceptable if the extracted behavior has a clear name and reduces one responsibility.
+- Avoid "just in case" abstractions.
 
-## Tests et validation
+## Tests and Validation
 
-- Lancer les tests ciblés quand ils existent.
-- Lancer PHPStan si le projet l'utilise et que le refactor touche les types, signatures ou generics.
-- Ajouter ou adapter un test seulement si nécessaire pour sécuriser le refactor.
-- Si aucun test ne couvre le comportement refactoré, signaler le risque dans la réponse.
+- Run targeted tests when they exist.
+- Run PHPStan if the project uses it and the refactor touches types, signatures, or generics.
+- Add or adapt a test only if needed to secure the refactor.
+- If no test covers the refactored behavior, report the risk in the response.
 
-## Ne pas faire
+## Do Not
 
-- Ne pas extraire une interface si une seule classe l'implémente (sauf pour le Domain)
-- Ne pas renommer sans raison
-- Ne pas changer une signature publique sans nécessité
-- Ne pas modifier les payloads API, codes HTTP, exceptions métier ou règles de validation
-- Ne pas modifier une migration existante déjà potentiellement appliquée
-- Ne pas changer les noms de routes, commandes, services ou handlers sans demande explicite
-- Ne pas mélanger refactor et changement fonctionnel dans la même modification
+- Do not extract an interface if only one class implements it (except for the Domain).
+- Do not rename without a reason.
+- Do not change a public signature unless necessary.
+- Do not modify API payloads, HTTP statuses, business exceptions, or validation rules.
+- Do not modify an existing migration that may already have been applied.
+- Do not change route, command, service, or handler names without an explicit request.
+- Do not mix refactoring and functional change in the same modification.
 
-## Format de sortie
+## Output Format
 
-Résumer :
+Summarize:
 
-- Fichiers modifiés
-- Refactors appliqués et raison courte
-- Comportement préservé
-- Tests ou vérifications lancés
-- Risques ou limites restantes
+- Modified files
+- Refactors applied and short reason
+- Preserved behavior
+- Tests or checks run
+- Remaining risks or limitations
