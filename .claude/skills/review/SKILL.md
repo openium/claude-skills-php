@@ -1,55 +1,135 @@
 ---
 name: review
-description: "Revue de code standardisée pour projet PHP/Symfony. Analyse le diff git staged ou un fichier donné. Détecte les violations d'architecture, failles de sécurité, tests manquants, et violations PSR-12."
+description: "PHP/Symfony code review for a git diff, modified files, branch, or given scope. Use for a review, reread, PR audit, or pre-commit check. Prioritizes bugs, security, architecture, regressions, missing tests, Doctrine, and migrations."
 ---
 
-# Revue de code PHP/Symfony
+# PHP/Symfony Code Review
 
-## Contexte
+## Scope
 
-Analyse le diff git staged (`git diff --cached`). Si aucun fichier n'est staged, analyse le diff non staged (`git diff`). Si un fichier ou dossier est spécifié par l'utilisateur, analyse uniquement celui-ci.
+If the user specifies a file, directory, commit, branch, or scope, analyze only that scope.
 
-## Critères d'analyse
+Otherwise:
 
-### Architecture (bloquant)
+- Analyze the staged diff (`git diff --cached`) if it exists.
+- Otherwise, analyze the unstaged diff (`git diff`).
+- If no diff exists, ask for the scope to review.
 
-- Logique métier dans un contrôleur, une commande console, ou un listener
-- Dépendance du Domain vers l'Infrastructure ou vers le Framework
-- Import Symfony dans une classe du Domain (Entity, ValueObject, Service métier)
-- Repository qui contient de la logique métier au lieu de requêtes
-- Service applicatif qui accède directement à `$_GET`, `$_POST`, `$_SESSION` ou `Request`
+## Process
 
-### Sécurité (bloquant)
+1. Read `git status` and a diff summary (`git diff --stat` or equivalent).
+2. Read the detailed diff for the affected files.
+3. Inspect neighboring files only when needed to verify a risk.
+4. Identify project conventions before reporting a violation.
+5. Report only issues proven by the code, configuration, or diff.
 
-- Requêtes DQL/SQL construites par concaténation au lieu de paramètres bindés
-- Données utilisateur affichées dans Twig sans échappement (`|raw` sur des données non fiables)
-- Contrôleur ou route sans contrôle d'accès (`#[IsGranted]`, `denyAccessUnlessGranted`, voter)
-- Tokens, mots de passe, clés API en dur dans le code
-- Désérialisation de données utilisateur sans validation
-- Upload de fichier sans vérification du type MIME réel
+Do not modify code during a review unless explicitly requested.
 
-### Tests (important)
+## Severities
 
-- Classe métier sans test unitaire correspondant
-- Cas limites non couverts (null, chaîne vide, collection vide, valeurs extrêmes)
-- Test fonctionnel qui mocke la base de données au lieu de la tester réellement
-- Absence de data provider quand plusieurs cas similaires sont testés
+- **Blocking**: confirmed bug, security flaw, data loss, regression, uncontrolled backward compatibility break, certain architecture violation.
+- **Important**: real and plausible risk, missing test for critical behavior, technical debt that blocks a near-term change.
+- **Suggestion**: readability, convention, simplification, or improvement without immediate risk.
 
-### Conventions (suggestion)
+## Analysis Points
 
-- Violations PSR-12 (nommage, espacement, structure)
-- Nommage incohérent avec le reste du projet
-- Méthode de plus de 30 lignes sans extraction
-- Classe de plus de 300 lignes
-- Injection par constructeur manquante (utilisation de `new` pour un service)
+### Bugs and Regressions
 
-### Doctrine (important)
+- Behavior change that is uncovered or unannounced
+- Broken edge case: null, empty string, empty collection, extreme value
+- Exception swallowed or replaced by a silent error
+- Change to a signature, return type, API payload, or public exception
+- Dangerous default value or one incompatible with existing behavior
 
-- Relation sans cascade appropriée
-- Requête N+1 détectable (boucle sur une collection lazy-loadée)
-- Absence d'index sur une colonne utilisée dans un WHERE ou ORDER BY
-- Flush dans une boucle au lieu d'un flush unique
+### Architecture
 
-## Format de sortie
+- Business logic in a controller, console command, or listener
+- Dependency from the Domain to the Infrastructure or to the Framework
+- Symfony import in a Domain class (Entity, ValueObject, business Service)
+- Repository that contains business logic instead of queries
+- Application service that directly accesses `$_GET`, `$_POST`, `$_SESSION`, or `Request`
+- Abstraction added without a real need or incompatible with project conventions
 
-Classe chaque remarque par sévérité : bloquant, important, suggestion. Pour chaque remarque : fichier et ligne, description du problème, exemple de correction.
+### Security
+
+- DQL/SQL queries built by concatenation instead of bound parameters
+- User data displayed in Twig without escaping (`|raw` on untrusted data)
+- Sensitive route without access control (`#[IsGranted]`, `denyAccessUnlessGranted`, voter, `access_control`)
+- Tokens, passwords, or API keys hardcoded in code
+- User data deserialized without validation
+- File upload without checking the real MIME type
+- Shell command built with unescaped user data
+- Log containing a token, password, Authorization header, or sensitive personal data
+
+### Tests
+
+- Business behavior added without a corresponding test
+- Possible regression without a regression test
+- Functional test that mocks the database instead of testing it for real
+- Missing data provider when several similar cases are tested
+- Test that does not actually verify the modified behavior
+
+### Doctrine and Migrations
+
+- Entity modified without a corresponding migration
+- Destructive migration without a safeguard or safe default value
+- Relation without an appropriate cascade
+- N+1 query detectable in the diff
+- Missing index on an added column used in a WHERE, JOIN, or ORDER BY
+- Flush inside a loop instead of a single flush
+- Multiple consistent writes without an explicit transaction
+
+### API, DTO, and Validation
+
+- Endpoint that accepts user data without server-side validation
+- Direct hydration of a Doctrine entity from an external request
+- Serializer with groups that are too broad or missing on a sensitive response
+- Missing input DTO for a complex or sensitive operation
+- HTTP status, error format, or response contract incompatible with existing behavior
+
+### Messenger and Async
+
+- Handler that is not idempotent while the message may be replayed
+- Dangerous retry for a non-repeatable operation
+- Message containing too much data instead of stable identifiers
+- Missing log or failure handling for critical processing
+
+### Performance
+
+- Query inside a loop, missing pagination, or excessive loading
+- Lazy loading triggered inside a loop
+- Network call or blocking I/O inside a loop without batching
+- Serializer that exposes or loads more data than necessary
+
+### Conventions
+
+- PSR-12 violations (naming, spacing, structure)
+- Naming inconsistent with the rest of the project
+- Method longer than 30 lines without extraction
+- Class longer than 300 lines
+- Line longer than 100 characters
+- 2 or more consecutive blank lines
+- Missing constructor injection (use of `new` for a service)
+
+## Do Not Report
+
+- Missing tests if the diff does not change behavior.
+- A convention if the project clearly follows a different convention.
+- A stylistic improvement with no impact when more important issues exist.
+- A speculative risk without a credible execution path.
+- The same issue repeated line by line: group the remark.
+
+## Output Format
+
+Present findings first, sorted by decreasing severity.
+
+For each finding:
+
+- File and line
+- Severity: blocking, important, or suggestion
+- Evidence verified in the code or diff
+- Concrete impact
+- Proposed fix
+- Recommended test or verification
+
+If no issue is found, say so clearly and mention any tests not run or review limitations.

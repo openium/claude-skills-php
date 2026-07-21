@@ -1,69 +1,201 @@
 ---
 name: twig
-description: "Audit et amélioration de templates Twig. Vérifie l'accessibilité, la performance, les bonnes pratiques, et la sécurité. Utiliser pour auditer un template existant ou quand on veut un retour sur la qualité d'un template."
+description: "Audits and improves Symfony Twig templates. Checks security, accessibility, performance, forms, architecture, i18n, UX, emails, and project conventions while considering Symfony/Twig versions and existing patterns."
 ---
 
-# Audit de templates Twig
+# Twig Template Audit
 
-## Périmètre
+## Scope
 
-Analyser le template indiqué ou les templates du dossier `templates/`. Si aucun périmètre n'est précisé, se concentrer sur les templates modifiés (`git diff`).
+If the user specifies a template, directory, diff, form, layout, component, Twig email, back-office page, or HTML rendering, analyze only that scope.
 
-## Critères d'analyse
+Otherwise:
 
-### Sécurité (bloquant)
+- Analyze modified templates (`git diff`) if any.
+- Otherwise, ask for the template or directory to audit.
 
-- `|raw` sur des données utilisateur sans sanitization
-- Variables dans des attributs HTML sans échappement contextuel
-- URLs construites à partir de données utilisateur (`href="{{ user_url }}"`)
-- Formulaires sans token CSRF (`{{ csrf_token('intention') }}` ou `form_rest()`)
-- Inclusion de template dynamique (`include(variable)`) avec des données non fiables
+Do not modify templates during an audit unless explicitly requested.
+
+## Current State
+
+Inspect according to the scope:
+
+- Target template, parent layouts, partials, includes, macros, or components used
+- Controller, form type, DTO, or view model that provides variables
+- Routes used by `path()` / `url()`
+- Translations and i18n domains if present
+- Assets, importmap, Webpack Encore, AssetMapper, or existing pipeline
+- Design system, CSS classes, UI components, or project conventions
+- Functional tests covering the page if present
+
+Never read `.env.local`.
+
+## Symfony/Twig Compatibility
+
+- Do not assume Twig Components, UX, Stimulus, AssetMapper, or importmap if the project does not use them.
+- On legacy projects, respect existing macros, partials, includes, and conventions.
+- On recent projects, use Twig Components only if already installed and used.
+- Follow the project's routing, forms, translations, and assets style.
+- Do not introduce a new template organization without clear benefit.
+
+## Severities
+
+- **Blocking**: XSS, missing CSRF on mutating action, sensitive data leak, dangerous URL, untrusted dynamic include.
+- **Important**: broken accessibility, probable N+1, incomplete form, heavy business logic, duplication that makes the page fragile.
+- **Suggestion**: convention, readability, partial extraction, i18n, non-critical UX improvement.
+
+## Analysis Criteria
+
+### Security (blocking)
+
+- `|raw` on user data without sanitization
+- Variables in HTML attributes without contextual escaping
+- URLs built from user data (`href="{{ user_url }}"`)
+- Forms without CSRF token (`{{ csrf_token('intent') }}` or `form_rest()`)
+- Dynamic template inclusion (`include(variable)`) with untrusted data
+- User data injected into inline JavaScript without adapted JSON encoding
+- `href`, `src`, `action`, or `formaction` fed by an unvalidated external value
+- Sensitive data displayed: token, private email, internal role, technical identifier, unnecessary personal information
+- Email template exposing sensitive data or non-expiring links
+- Authorization logic only in Twig without controller/voter-side control
 
 ### Performance (important)
 
-- Requêtes Doctrine déclenchées dans le template (lazy loading via des getters de relation)
-- Boucles sur des collections non paginées
-- Filtres coûteux dans des boucles (`|sort`, `|filter`, `|map` sur de grandes collections)
-- Assets non versionnés (cache busting absent)
-- Blocs répétitifs qui pourraient être cachés avec `{% cache %}`
+- Doctrine queries triggered in the template (lazy loading through relation getters)
+- Loops over unpaginated collections
+- Costly filters in loops (`|sort`, `|filter`, `|map` on large collections)
+- Unversioned assets (missing cache busting)
+- Repetitive blocks that could be cached with `{% cache %}`
+- `|length` on a non-initialized lazy Doctrine collection
+- Includes, embeds, components, or macros called in a large loop
+- Repeated computation or formatting that should be prepared in controller/view model
+- Images too heavy or without dimensions if visible in the template
+- Excessive HTML payload for an unpaginated list
 
 ### Architecture (important)
 
-- Logique métier dans le template (calculs, conditions complexes, formatage avancé). Extraire vers une Twig Extension ou un service
-- Template de plus de 200 lignes sans extraction de blocs ou partials
-- Duplication de HTML entre templates. Extraire dans un `_partial.html.twig` ou un Twig Component
+- Business logic in the template (calculations, complex conditions, advanced formatting). Extract to a Twig Extension or service
+- Template longer than 200 lines without block or partial extraction
+- HTML duplicated between templates. Extract to a `_partial.html.twig` or Twig Component
+- Template depending on too many implicit variables
+- Role or business-state conditions duplicated in several templates
+- Partial whose behavior changes heavily based on too many options
+- Macro or component introduced while the project already uses a different convention
+- Layout or blocks inconsistent with the rest of the application
 
-### Accessibilité (important)
+### Accessibility (important)
 
-- Images sans attribut `alt`
-- Formulaires sans labels associés aux inputs
-- Liens sans texte descriptif
-- Hiérarchie de headings cassée (h1 puis h3 sans h2)
-- Éléments interactifs non accessibles au clavier
-- Tableaux sans `<thead>`, `<th>`, ou `scope`
+- Images without `alt` attribute
+- Forms without labels associated with inputs
+- Links without descriptive text
+- Broken heading hierarchy (h1 then h3 without h2)
+- Interactive elements not keyboard-accessible
+- Tables without `<thead>`, `<th>`, or `scope`
+- Button rendered as link or link rendered as button without correct semantics
+- Error message not associated with the affected field
+- Required field indicated only by color or placeholder
+- Modal, menu, or dropdown without focus/keyboard management if visible in the template
+- Icon alone without accessible text (`aria-label`, hidden text, or title according to convention)
+- Contrast or target size clearly problematic if visible in classes/styles
 
-### Bonnes pratiques Twig
+### Symfony Forms (important)
 
-- Utiliser `{{ path('route_name') }}` au lieu de URLs en dur
-- Utiliser `{{ asset('path') }}` pour les fichiers statiques
-- Utiliser `|trans` pour les chaînes (i18n-ready)
-- Préférer les Twig Components aux macros pour les éléments réutilisables
-- `form_rest(form)` à la fin de chaque formulaire
-- Nommage des blocs : explicite et cohérent
+- Use `form_start()` and `form_end()` unless the project convention differs
+- Keep `form_rest(form)` or `form_end(form)` for hidden fields and CSRF
+- Display global errors and field errors
+- Associate labels, help, and errors with fields
+- Do not display or make sensitive/system fields editable
+- Deletion protected by CSRF and confirmation if destructive
+- Collection prototypes properly escaped and documented on the JS side if used
+- Upload: correct enctype through `form_start`, user help, and visible errors
 
-### Structure des templates
+### Twig and Symfony Best Practices
 
-- Héritage : un template de base (`base.html.twig`), des layouts intermédiaires si nécessaire
-- Nommage : `entity/action.html.twig` cohérent avec les routes
-- Partials préfixés par `_` : `_navbar.html.twig`, `_sidebar.html.twig`
+- Use `{{ path('route_name') }}` instead of hardcoded URLs
+- Use `{{ asset('path') }}` for static files
+- Use `|trans` for strings (i18n-ready)
+- Prefer Twig Components over macros for reusable elements
+- `form_rest(form)` at the end of each form
+- Block naming: explicit and coherent
+- Use `url()` when an absolute URL is needed, especially email
+- Keep conditions simple and readable
+- Prefer a controller-prepared variable over a complex Twig computation
+- Respect existing translation domains
+- Use date, number, and currency filters according to locale/project convention
+- Do not force Twig Components if the project uses macros/partials
 
-## Format de sortie
+### Template Structure
 
-Pour chaque problème :
-- Fichier et ligne
-- Catégorie (sécurité, performance, accessibilité, bonnes pratiques)
-- Sévérité
-- Code problématique
-- Code corrigé
+- Inheritance: one base template (`base.html.twig`), intermediate layouts if needed
+- Naming: `entity/action.html.twig` coherent with routes
+- Partials prefixed with `_`: `_navbar.html.twig`, `_sidebar.html.twig`
+- A child template must define only needed blocks
+- Partials must have a clear responsibility
+- Includes must receive required variables explicitly if project convention allows it
+- CRUD pages must remain coherent with layout, flashes, navigation, and existing actions
 
-Résumé en fin d'audit avec le nombre de problèmes par catégorie.
+### i18n and Content (suggestion)
+
+- User strings hardcoded while the project is translated
+- Inconsistent translation domain
+- Plural not handled (`transchoice` legacy or `trans` with ICU according to version)
+- Dates, numbers, amounts, or currencies formatted manually
+- Button or link text not explicit
+- Missing error message or empty state
+
+### UX (suggestion)
+
+- Missing empty state on a list
+- Flash messages not displayed or inconsistent with layout
+- Missing pagination, sorting, or search while the list can grow
+- Missing confirmation on deletion or irreversible action
+- Active navigation, breadcrumbs, or back-to-list link inconsistent with project convention
+- Form errors hard to understand
+
+### Twig Emails (important)
+
+- Use absolute URLs for external links (`url()` rather than `path()`)
+- Avoid depending on JS or external CSS unsupported by email clients
+- Provide alternative text or text version if the project already does so
+- Check sensitive data, expirable links, and user context
+- Keep styles email-compatible if the project uses inline styles
+- Images with `alt` and dimensions if needed
+
+## Useful Commands
+
+Adapt to the project:
+
+- `bin/console lint:twig templates/`
+- `bin/console debug:twig`
+- `bin/console debug:router route_name`
+- `bin/console debug:translation locale`
+- Targeted functional tests for the page
+- Symfony Profiler for Doctrine queries and rendering time
+
+Do not run destructive commands. Do not modify translations or assets without an explicit request.
+
+## Do Not
+
+- Do not add `|raw` to fix display without proven sanitization.
+- Do not put complex business logic in Twig.
+- Do not hide an authorization issue with a simple template-side `is_granted()`.
+- Do not introduce Twig Components, Stimulus, or a design system if the project does not use them.
+- Do not break legacy Symfony/Twig compatibility by using unsupported syntax.
+- Do not remove `form_rest` or hidden fields without checking CSRF and method spoofing.
+- Do not optimize a template by moving the problem to the controller without proof.
+
+## Output Format
+
+Present findings sorted by decreasing severity.
+
+For each issue:
+
+- File and line
+- Category: security, performance, accessibility, form, architecture, i18n, UX, email, best practices
+- Severity: blocking, important, or suggestion
+- Evidence verified in the template or linked code
+- Concrete impact
+- Proposed fix
+- Recommended test or verification
+
+If no issue is found, say so clearly and mention analysis limitations: controller not read, variables unknown, profiler unavailable, tests not run.
