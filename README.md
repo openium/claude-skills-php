@@ -46,6 +46,12 @@ Before modifying, list the planned changes and wait for my validation.
 
 ## Available Skills
 
+### Project Setup
+
+| Skill | Description |
+|-------|-------------|
+| [`/new-project`](.claude/skills/new-project/SKILL.md) | Create and initialize a new Symfony project with the Symfony CLI, asking for all needed choices first. |
+
 ### Code Quality
 
 | Skill | Description |
@@ -107,6 +113,7 @@ Before modifying, list the planned changes and wait for my validation.
 
 | Need | Skill | Example |
 |------|-------|---------|
+| Bootstrap a new project | `/new-project` | `/new-project create a new API-only Symfony project with PostgreSQL and JWT` |
 | Review a diff before commit | `/review` | `/review analyze the staged diff before commit` |
 | Simplify a class without changing behavior | `/refactor` | `/refactor src/Service/InvoiceCalculator.php` |
 | Fix PHPStan | `/phpstan` | `/phpstan fix this PHPStan error in UserRepository` |
