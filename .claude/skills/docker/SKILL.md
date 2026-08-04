@@ -19,6 +19,16 @@ If the need is ambiguous, ask for the target environment: local dev, test, CI, o
 
 Do not overwrite an existing Docker configuration without analyzing its conventions.
 
+## Reference
+
+Base every recommendation on the official Symfony documentation: https://symfony.com/doc/current/setup/docker.html
+
+- For a complete environment created from scratch, follow the setup the official doc recommends: the [symfony-docker](https://github.com/dunglas/symfony-docker) template, built on **FrankenPHP** (a single application server that embeds PHP and the web server, no separate PHP-FPM + Nginx/Caddy split). Use this as the default target unless the project already has a different working setup.
+- If the project already has PHP installed locally and only needs auxiliary services, propose the hybrid approach described in the doc instead: run DB/Redis/RabbitMQ/Mailpit through Docker Compose and start the app with `symfony server:start`, which auto-detects the Docker services and exposes them as environment variables.
+- Symfony Flex recipes automatically edit `compose.yaml` and `Dockerfile` when packages are installed (e.g. `composer require doctrine` adds a `database` service). This only works if the `###> recipes ###` / `###< recipes ###` markers are present and preserved in those files — never strip them.
+- The current convention is `compose.yaml` (not `docker-compose.yml`); keep the existing file name if the project already uses one.
+- Whether Flex generates Docker config on `symfony new`/package installs is controlled by `composer.json` → `extra.symfony.docker`; check it before assuming Docker support is present or absent.
+
 ## Current State
 
 Inspect according to the project:
@@ -59,8 +69,8 @@ From `composer.json`, `.env`, and configuration:
 
 ## Services
 
-- **PHP-FPM**: version aligned with composer.json, configurable Xdebug, OPcache
-- **Caddy** (recommended) or **Nginx**
+- **PHP application server**: prefer **FrankenPHP** (single image bundling PHP and the web server, per the official symfony-docker setup) for a new environment, with version aligned to composer.json, configurable Xdebug, and OPcache.
+- If the project already runs **PHP-FPM** with a separate **Caddy**, **Nginx**, or **Apache**, keep that split instead of migrating it to FrankenPHP.
 - **PostgreSQL/MySQL** according to DATABASE_URL, persistent volume
 - **Redis**, **RabbitMQ**, **Mailpit** according to needs
 - **Node** if package.json is present
@@ -189,10 +199,11 @@ Do not run a real migration, DB purge, volume deletion, or massive download with
 - Do not overwrite an existing Dockerfile or compose without preserving useful conventions.
 - Do not unnecessarily expose DB, RabbitMQ, Redis, or internal services.
 - Do not introduce an unnecessary service.
-- Do not impose Caddy, Nginx, Apache, Node, or a PHP version if the project indicates something else.
+- Do not impose FrankenPHP, Caddy, Nginx, Apache, Node, or a PHP version if the project indicates something else.
 - Do not use production credentials.
 - Do not automatically run migrations, fixtures, or workers at startup without an explicit request.
 - Do not generate a production configuration while pretending it is ready for every hosting provider.
+- Do not strip the `###> recipes ###` / `###< recipes ###` markers from `Dockerfile` or `compose.yaml`; Symfony Flex needs them to keep injecting service config on package install.
 
 ## Output Format
 
