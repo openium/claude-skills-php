@@ -138,7 +138,7 @@ git commit -m "Initial Symfony project setup"
 
 ## Docker
 
-If the user wants a containerized environment, delegate to the `/docker` skill rather than duplicating that logic here; only mention that it is available.
+If the user wants a containerized environment, delegate to the `/docker` skill rather than duplicating that logic here; only mention that it is available. `/docker` defaults new environments to the team's reference stack (PHP-FPM + Nginx, see `templates/docker/`) rather than FrankenPHP, so a project scaffolded here and dockerized right after gets the same structure as every other team project. `/docker` may also offer to record that stack choice as an ADR in the new project — that offer belongs to `/docker`, not to this skill.
 
 ## Validation
 
