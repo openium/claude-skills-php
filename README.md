@@ -44,7 +44,23 @@ Then:
 Before modifying, list the planned changes and wait for my validation.
 ```
 
+## Docker Reference Stack Template
+
+A ready-to-copy Docker stack is available in [`templates/docker/`](templates/docker/): multi-stage PHP-FPM `Dockerfile`, `docker-entrypoint.sh`, PHP `conf.d/` (Symfony tuning + Xdebug), Nginx `default.conf`, `compose.yaml`, `Makefile`, and `.dockerignore`.
+
+This is the default structure the `/docker` skill scaffolds for a new environment, so every dockerized project — new or existing — ends up with the same file layout, image choices, and Makefile targets. See the `/docker` skill's **Reference Stack** and **Optional Extras** sections for what to adapt per project and which add-ons (centralized log shipping, DB GUI config) are opt-in only.
+
+## ADR Template
+
+A generic Architecture Decision Record template is available in [`templates/adr/0000-template.md`](templates/adr/0000-template.md), for recording stack-level decisions (e.g. "why this Docker stack") directly in the target project, separately from the `SKILL.md` files that apply the decision. The `/docker` skill can offer to generate one from this template when creating a new environment from scratch.
+
 ## Available Skills
+
+### Project Setup
+
+| Skill | Description |
+|-------|-------------|
+| [`/new-project`](.claude/skills/new-project/SKILL.md) | Create and initialize a new Symfony project with the Symfony CLI, asking for all needed choices first. |
 
 ### Code Quality
 
@@ -107,6 +123,7 @@ Before modifying, list the planned changes and wait for my validation.
 
 | Need | Skill | Example |
 |------|-------|---------|
+| Bootstrap a new project | `/new-project` | `/new-project create a new API-only Symfony project with PostgreSQL and JWT` |
 | Review a diff before commit | `/review` | `/review analyze the staged diff before commit` |
 | Simplify a class without changing behavior | `/refactor` | `/refactor src/Service/InvoiceCalculator.php` |
 | Fix PHPStan | `/phpstan` | `/phpstan fix this PHPStan error in UserRepository` |
